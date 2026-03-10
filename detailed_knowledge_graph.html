@@ -1,0 +1,143 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #1a1a2e;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#ff6b6b", "font": {"color": "#ffffff"}, "id": "ISAC", "label": "ISAC", "shape": "dot", "size": 40, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#ff6b6b\u0027\u003eISAC\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u6838\u5fc3\u8303\u5f0f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u6982\u5ff5\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u96c6\u6210\u4f20\u611f\u4e0e\u901a\u4fe1\uff0c\u4f7f\u7528\u65e0\u7ebf\u901a\u4fe1\u57fa\u7840\u8bbe\u65bd\u8fdb\u884c\u73af\u5883 sensing\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#ff6b6b", "font": {"color": "#ffffff"}, "id": "6G", "label": "6G", "shape": "dot", "size": 40, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#ff6b6b\u0027\u003e6G\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u7f51\u7edc\u4ee3\u9645\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u6982\u5ff5\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u7b2c\u516d\u4ee3\u79fb\u52a8\u901a\u4fe1\u7f51\u7edc\uff0c\u652f\u6301 sensing \u7b49\u65b0\u529f\u80fd\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#4ecdc4", "font": {"color": "#ffffff"}, "id": "O-RAN", "label": "O-RAN", "shape": "dot", "size": 40, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#4ecdc4\u0027\u003eO-RAN\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u67b6\u6784\u6807\u51c6\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u67b6\u6784\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u5f00\u653e\u65e0\u7ebf\u63a5\u5165\u7f51\uff0c\u63d0\u4f9b\u667a\u80fd\u3001\u5f00\u653e\u7684 RAN \u67b6\u6784\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#4ecdc4", "font": {"color": "#ffffff"}, "id": "O-DU", "label": "O-DU", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#4ecdc4\u0027\u003eO-DU\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u7f51\u5143\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u67b6\u6784\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e O-RAN \u5206\u5e03\u5f0f\u5355\u5143\uff0c\u8d1f\u8d23\u57fa\u5e26\u5904\u7406\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#4ecdc4", "font": {"color": "#ffffff"}, "id": "O-RU", "label": "O-RU", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#4ecdc4\u0027\u003eO-RU\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u7f51\u5143\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u67b6\u6784\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e O-RAN \u5c04\u9891\u5355\u5143\uff0c\u8d1f\u8d23 RF \u5904\u7406\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#4ecdc4", "font": {"color": "#ffffff"}, "id": "Near-RT RIC", "label": "Near-RT RIC", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#4ecdc4\u0027\u003eNear-RT RIC\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u63a7\u5236\u5668\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u67b6\u6784\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u8fd1\u5b9e\u65f6 RAN \u667a\u80fd\u63a7\u5236\u5668\uff0c\u5ef6\u8fdf\u003c10ms\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#4ecdc4", "font": {"color": "#ffffff"}, "id": "Non-RT RIC", "label": "Non-RT RIC", "shape": "dot", "size": 20, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#4ecdc4\u0027\u003eNon-RT RIC\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u63a7\u5236\u5668\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u67b6\u6784\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u975e\u5b9e\u65f6 RAN \u667a\u80fd\u63a7\u5236\u5668\uff0c\u5ef6\u8fdf\u003e1s\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#45b7d1", "font": {"color": "#ffffff"}, "id": "xApps", "label": "xApps", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#45b7d1\u0027\u003exApps\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u5e94\u7528\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u5e94\u7528\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u8fd0\u884c\u5728 Near-RT RIC \u4e0a\u7684\u5e94\u7528\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#45b7d1", "font": {"color": "#ffffff"}, "id": "dApps", "label": "dApps", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#45b7d1\u0027\u003edApps\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u5e94\u7528\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u5e94\u7528\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u8fd0\u884c\u5728 O-DU \u4e0a\u7684\u5206\u5e03\u5f0f\u5e94\u7528\uff0c\u5904\u7406 sensing\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#96ceb4", "font": {"color": "#ffffff"}, "id": "E2SM-SENS", "label": "E2SM-SENS", "shape": "dot", "size": 40, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#96ceb4\u0027\u003eE2SM-SENS\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u670d\u52a1\u6a21\u578b\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u63a5\u53e3\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e E2 \u670d\u52a1\u6a21\u578b for SENSing\uff0c\u652f\u6301 sensing \u9065\u6d4b\u8ba2\u9605\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#96ceb4", "font": {"color": "#ffffff"}, "id": "E2 \u63a5\u53e3", "label": "E2 \u63a5\u53e3", "shape": "dot", "size": 20, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#96ceb4\u0027\u003eE2 \u63a5\u53e3\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u63a5\u53e3\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u63a5\u53e3\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e Near-RT RIC \u4e0e O-CU/O-DU \u4e4b\u95f4\u7684\u63a5\u53e3\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#96ceb4", "font": {"color": "#ffffff"}, "id": "Open Fronthaul", "label": "Open Fronthaul", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#96ceb4\u0027\u003eOpen Fronthaul\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u63a5\u53e3\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u63a5\u53e3\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e O-DU \u4e0e O-RU \u4e4b\u95f4\u7684\u5f00\u653e\u524d\u4f20\u63a5\u53e3\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#ffeaa7", "font": {"color": "#ffffff"}, "id": "IQ \u91c7\u6837", "label": "IQ \u91c7\u6837", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#ffeaa7\u0027\u003eIQ \u91c7\u6837\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u4fe1\u53f7\u5904\u7406\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u7269\u7406\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u540c\u76f8/\u6b63\u4ea4\u91c7\u6837\uff0c\u7528\u4e8e\u63d0\u53d6 sensing \u7279\u5f81\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#ffeaa7", "font": {"color": "#ffffff"}, "id": "\u6ce2\u675f\u6210\u5f62", "label": "\u6ce2\u675f\u6210\u5f62", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#ffeaa7\u0027\u003e\u6ce2\u675f\u6210\u5f62\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u5929\u7ebf\u6280\u672f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u7269\u7406\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u4f7f\u7528\u5929\u7ebf\u9635\u5217\u5b9a\u5411\u53d1\u5c04/\u63a5\u6536\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#ffeaa7", "font": {"color": "#ffffff"}, "id": "\u5168\u53cc\u5de5", "label": "\u5168\u53cc\u5de5", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#ffeaa7\u0027\u003e\u5168\u53cc\u5de5\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u901a\u4fe1\u6280\u672f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u7269\u7406\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u540c\u65f6\u540c\u9891\u8fdb\u884c\u53d1\u5c04\u548c\u63a5\u6536\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#dfe6e9", "font": {"color": "#ffffff"}, "id": "\u5ef6\u8fdf\u7279\u5f81", "label": "\u5ef6\u8fdf\u7279\u5f81", "shape": "dot", "size": 20, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#dfe6e9\u0027\u003e\u5ef6\u8fdf\u7279\u5f81\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e sensing \u7279\u5f81\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u7279\u5f81\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u4ece IQ \u91c7\u6837\u63d0\u53d6\u7684\u76ee\u6807\u8ddd\u79bb\u4fe1\u606f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#dfe6e9", "font": {"color": "#ffffff"}, "id": "\u591a\u666e\u52d2\u7279\u5f81", "label": "\u591a\u666e\u52d2\u7279\u5f81", "shape": "dot", "size": 20, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#dfe6e9\u0027\u003e\u591a\u666e\u52d2\u7279\u5f81\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e sensing \u7279\u5f81\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u7279\u5f81\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u4ece IQ \u91c7\u6837\u63d0\u53d6\u7684\u76ee\u6807\u901f\u5ea6\u4fe1\u606f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#dfe6e9", "font": {"color": "#ffffff"}, "id": "\u89d2\u5ea6\u7279\u5f81", "label": "\u89d2\u5ea6\u7279\u5f81", "shape": "dot", "size": 20, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#dfe6e9\u0027\u003e\u89d2\u5ea6\u7279\u5f81\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e sensing \u7279\u5f81\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u7279\u5f81\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u4ece IQ \u91c7\u6837\u63d0\u53d6\u7684\u76ee\u6807\u65b9\u5411\u4fe1\u606f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#45b7d1", "font": {"color": "#ffffff"}, "id": "\u5355\u9759\u6001\u4f20\u611f", "label": "\u5355\u9759\u6001\u4f20\u611f", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#45b7d1\u0027\u003e\u5355\u9759\u6001\u4f20\u611f\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e sensing \u6a21\u5f0f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u5e94\u7528\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u53d1\u5c04\u548c\u63a5\u6536\u5728\u540c\u4e00\u4f4d\u7f6e\u7684 sensing\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#45b7d1", "font": {"color": "#ffffff"}, "id": "\u53cc\u9759\u6001\u4f20\u611f", "label": "\u53cc\u9759\u6001\u4f20\u611f", "shape": "dot", "size": 20, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#45b7d1\u0027\u003e\u53cc\u9759\u6001\u4f20\u611f\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e sensing \u6a21\u5f0f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u5e94\u7528\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u53d1\u5c04\u548c\u63a5\u6536\u5728\u4e0d\u540c\u4f4d\u7f6e\u7684 sensing\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#45b7d1", "font": {"color": "#ffffff"}, "id": "\u534f\u4f5c\u4f20\u611f", "label": "\u534f\u4f5c\u4f20\u611f", "shape": "dot", "size": 20, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#45b7d1\u0027\u003e\u534f\u4f5c\u4f20\u611f\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e sensing \u6a21\u5f0f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u5e94\u7528\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u591a\u4e2a\u57fa\u7ad9\u534f\u4f5c\u8fdb\u884c sensing\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#a29bfe", "font": {"color": "#ffffff"}, "id": "\u7aef\u5230\u7aef\u5ef6\u8fdf", "label": "\u7aef\u5230\u7aef\u5ef6\u8fdf", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#a29bfe\u0027\u003e\u7aef\u5230\u7aef\u5ef6\u8fdf\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u6027\u80fd\u6307\u6807\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u6027\u80fd\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e sensing \u95ed\u73af\u63a7\u5236\u7684\u603b\u5ef6\u8fdf\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}, {"color": "#45b7d1", "font": {"color": "#ffffff"}, "id": "\u95ed\u73af\u63a7\u5236", "label": "\u95ed\u73af\u63a7\u5236", "shape": "dot", "size": 30, "title": "\u003cdiv style=\u0027padding:10px;\u0027\u003e\u003ch3 style=\u0027margin:0 0 10px 0;color:#45b7d1\u0027\u003e\u95ed\u73af\u63a7\u5236\u003c/h3\u003e\u003cp\u003e\u003cb\u003e\u7c7b\u578b:\u003c/b\u003e \u63a7\u5236\u6a21\u5f0f\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5c42\u7ea7:\u003c/b\u003e \u5e94\u7528\u5c42\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u5b9a\u4e49:\u003c/b\u003e \u57fa\u4e8e sensing \u53cd\u9988\u7684\u5b9e\u65f6\u63a7\u5236\u003c/p\u003e\u003cp\u003e\u003cb\u003e\u91cd\u8981\u5ea6:\u003c/b\u003e \u2b50\u2b50\u2b50\u2b50\u003c/p\u003e\u003c/div\u003e"}]);
+                  edges = new vis.DataSet([{"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "ISAC", "label": "\u5c5e\u4e8e", "title": "\u5c5e\u4e8e: ISAC \u662f 6G \u7684\u5173\u952e\u6280\u672f", "to": "6G", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "ISAC", "label": "\u96c6\u6210\u4e8e", "title": "\u96c6\u6210\u4e8e: ISAC \u9700\u8981\u96c6\u6210\u5230 O-RAN \u67b6\u6784", "to": "O-RAN", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "O-DU", "label": "\u5c5e\u4e8e", "title": "\u5c5e\u4e8e: O-DU \u662f O-RAN \u7684\u7ec4\u4ef6", "to": "O-RAN", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "O-RU", "label": "\u5c5e\u4e8e", "title": "\u5c5e\u4e8e: O-RU \u662f O-RAN \u7684\u7ec4\u4ef6", "to": "O-RAN", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "Near-RT RIC", "label": "\u5c5e\u4e8e", "title": "\u5c5e\u4e8e: Near-RT RIC \u662f O-RAN \u7684\u7ec4\u4ef6", "to": "O-RAN", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "xApps", "label": "\u8fd0\u884c\u4e8e", "title": "\u8fd0\u884c\u4e8e: xApps \u8fd0\u884c\u5728 Near-RT RIC \u4e0a", "to": "Near-RT RIC", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "dApps", "label": "\u8fd0\u884c\u4e8e", "title": "\u8fd0\u884c\u4e8e: dApps \u8fd0\u884c\u5728 O-DU \u4e0a", "to": "O-DU", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "E2SM-SENS", "label": "\u670d\u52a1\u4e8e", "title": "\u670d\u52a1\u4e8e: E2SM-SENS \u4e3a xApps \u63d0\u4f9b sensing \u6570\u636e", "to": "xApps", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "E2SM-SENS", "label": "\u652f\u6301", "title": "\u652f\u6301: E2SM-SENS \u652f\u6301 ISAC \u529f\u80fd", "to": "ISAC", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "E2SM-SENS", "label": "\u4f7f\u7528", "title": "\u4f7f\u7528: E2SM-SENS \u57fa\u4e8e E2 \u63a5\u53e3", "to": "E2 \u63a5\u53e3", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "Open Fronthaul", "label": "\u8fde\u63a5", "title": "\u8fde\u63a5: Open Fronthaul \u8fde\u63a5 O-DU", "to": "O-DU", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "Open Fronthaul", "label": "\u8fde\u63a5", "title": "\u8fde\u63a5: Open Fronthaul \u8fde\u63a5 O-RU", "to": "O-RU", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "dApps", "label": "\u5904\u7406", "title": "\u5904\u7406: dApps \u5904\u7406 IQ \u91c7\u6837\u6570\u636e", "to": "IQ \u91c7\u6837", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "IQ \u91c7\u6837", "label": "\u63d0\u53d6", "title": "\u63d0\u53d6: \u4ece IQ \u91c7\u6837\u63d0\u53d6\u5ef6\u8fdf\u7279\u5f81", "to": "\u5ef6\u8fdf\u7279\u5f81", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "IQ \u91c7\u6837", "label": "\u63d0\u53d6", "title": "\u63d0\u53d6: \u4ece IQ \u91c7\u6837\u63d0\u53d6\u591a\u666e\u52d2\u7279\u5f81", "to": "\u591a\u666e\u52d2\u7279\u5f81", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "IQ \u91c7\u6837", "label": "\u63d0\u53d6", "title": "\u63d0\u53d6: \u4ece IQ \u91c7\u6837\u63d0\u53d6\u89d2\u5ea6\u7279\u5f81", "to": "\u89d2\u5ea6\u7279\u5f81", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "\u6ce2\u675f\u6210\u5f62", "label": "\u7528\u4e8e", "title": "\u7528\u4e8e: \u6ce2\u675f\u6210\u5f62\u7528\u4e8e ISAC", "to": "ISAC", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "\u5168\u53cc\u5de5", "label": "\u7528\u4e8e", "title": "\u7528\u4e8e: \u5168\u53cc\u5de5\u7528\u4e8e ISAC", "to": "ISAC", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "\u5355\u9759\u6001\u4f20\u611f", "label": "\u6a21\u5f0f", "title": "\u6a21\u5f0f: \u5355\u9759\u6001\u662f ISAC \u7684\u4e00\u79cd\u6a21\u5f0f", "to": "ISAC", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "\u53cc\u9759\u6001\u4f20\u611f", "label": "\u6a21\u5f0f", "title": "\u6a21\u5f0f: \u53cc\u9759\u6001\u662f ISAC \u7684\u4e00\u79cd\u6a21\u5f0f", "to": "ISAC", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "\u534f\u4f5c\u4f20\u611f", "label": "\u6a21\u5f0f", "title": "\u6a21\u5f0f: \u534f\u4f5c\u662f ISAC \u7684\u4e00\u79cd\u6a21\u5f0f", "to": "ISAC", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "\u95ed\u73af\u63a7\u5236", "label": "\u5b9e\u73b0", "title": "\u5b9e\u73b0: ISAC \u5b9e\u73b0\u95ed\u73af\u63a7\u5236", "to": "ISAC", "width": 2}, {"color": "#888888", "dashes": true, "font": {"align": "top", "color": "#cccccc", "size": 10}, "from": "\u7aef\u5230\u7aef\u5ef6\u8fdf", "label": "\u8861\u91cf", "title": "\u8861\u91cf: \u7aef\u5230\u7aef\u5ef6\u8fdf\u8861\u91cf\u95ed\u73af\u63a7\u5236\u6027\u80fd", "to": "\u95ed\u73af\u63a7\u5236", "width": 2}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"nodes": {"font": {"size": 14, "face": "Arial", "color": "#ffffff"}, "borderWidth": 2, "borderColor": "#ffffff"}, "edges": {"font": {"size": 10, "color": "#cccccc", "strokeWidth": 0}, "smooth": {"type": "continuous"}, "arrows": {"to": {"enabled": true, "scaleFactor": 0.5}}}, "interaction": {"dragNodes": true, "dragView": true, "zoomView": true, "hover": true, "tooltipDelay": 100, "hideEdgesOnDrag": false}, "physics": {"enabled": true, "barnesHut": {"gravitationalConstant": -50000, "centralGravity": 0.5, "springLength": 200, "springConstant": 0.001, "damping": 0.09}, "stabilization": {"enabled": true, "iterations": 150, "updateInterval": 50}}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+    <div style="position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.8);
+         padding:15px;border-radius:8px;z-index:9999;color:white;font-family:Arial;">
+        <h4 style="margin:0 0 10px 0;">📊 图例</h4>
+        <div style="margin:5px 0;"><span style="color:#ff6b6b;">●</span> 概念层</div>
+        <div style="margin:5px 0;"><span style="color:#4ecdc4;">●</span> 架构层</div>
+        <div style="margin:5px 0;"><span style="color:#45b7d1;">●</span> 应用层</div>
+        <div style="margin:5px 0;"><span style="color:#96ceb4;">●</span> 接口层</div>
+        <div style="margin:5px 0;"><span style="color:#ffeaa7;">●</span> 物理层</div>
+        <div style="margin:5px 0;"><span style="color:#dfe6e9;">●</span> 特征层</div>
+        <div style="margin:5px 0;"><span style="color:#a29bfe;">●</span> 性能层</div>
+        <hr style="border-color:#666;">
+        <div style="margin:5px 0;">⭐⭐⭐⭐⭐ 核心概念</div>
+        <div style="margin:5px 0;">⭐⭐⭐⭐ 重要组件</div>
+        <div style="margin:5px 0;">⭐⭐⭐ 辅助概念</div>
+    </div>
+    </body>
+</html>

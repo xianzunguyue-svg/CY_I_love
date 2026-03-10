@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISAC 知识图谱 - 科幻版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff; }
+            to { text-shadow: 0 0 20px #0ff, 0 0 30px #0ff, 0 0 50px #0ff, 0 0 60px #0ff; }
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: bold;
+            letter-spacing: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1em;
+            opacity: 0.8;
+            letter-spacing: 2px;
+        }
+        
+        .toolbar {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        
+        .toolbar button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid #0ff;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px #0ff, 0 0 20px rgba(0,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .toolbar button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0,255,255,0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .stats-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            pointer-events: auto;
+        }
+        
+        .stat-card {
+            background: rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid #0ff;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,255,255,0.3), inset 0 0 20px rgba(0,255,255,0.1);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(0,255,255,0.6), inset 0 0 30px rgba(0,255,255,0.2);
+        }
+        
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+        }
+        
+        .stat-label {
+            color: #fff;
+            margin-top: 5px;
+            font-size: 0.9em;
+            letter-spacing: 2px;
+        }
+        
+        #tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            padding: 15px;
+            color: #0ff;
+            font-size: 14px;
+            max-width: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 0 20px rgba(0,255,255,0.5);
+            z-index: 1000;
+        }
+        
+        #tooltip h3 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            text-shadow: 0 0 10px #0ff;
+        }
+        
+        #tooltip p {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid #0ff;
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            pointer-events: auto;
+        }
+        
+        .legend h3 {
+            color: #0ff;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px #0ff;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s;
+        }
+        
+        .loading-spinner {
+            width: 100px;
+            height: 100px;
+            border: 4px solid rgba(0,255,255,0.3);
+            border-top-color: #0ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 30px rgba(0,255,255,0.5);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, #0ff 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+            50% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <canvas id="canvas"></canvas>
+    
+    <div id="ui">
+        <div class="header">
+            <h1>🧠 ISAC 知识图谱</h1>
+            <p>INTEGRATED SENSING AND COMMUNICATION</p>
+        </div>
+        
+        <div class="toolbar">
+            <button onclick="resetView()">🎯 重置视图</button>
+            <button onclick="toggleAnimation()">⚡ 暂停/继续</button>
+            <button onclick="expandAll()">📖 全部展开</button>
+            <button onclick="collapseAll()">📕 全部折叠</button>
+            <button onclick="exportImage()">📷 导出图片</button>
+            <button onclick="toggleFullscreen()">🖥️ 全屏</button>
+        </div>
+        
+        <div class="stats-panel">
+            <div class="stat-card">
+                <div class="stat-number">23</div>
+                <div class="stat-label">NODES</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">23</div>
+                <div class="stat-label">EDGES</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">7</div>
+                <div class="stat-label">LAYERS</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5★</div>
+                <div class="stat-label">CORE</div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <h3>📊 LAYER LEGEND</h3>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff6b6b; box-shadow: 0 0 10px #ff6b6b;"></div>
+                <span>概念层 (Concept)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4ecdc4; box-shadow: 0 0 10px #4ecdc4;"></div>
+                <span>架构层 (Architecture)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #45b7d1; box-shadow: 0 0 10px #45b7d1;"></div>
+                <span>应用层 (Application)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #96ceb4; box-shadow: 0 0 10px #96ceb4;"></div>
+                <span>接口层 (Interface)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffeaa7; box-shadow: 0 0 10px #ffeaa7;"></div>
+                <span>物理层 (Physical)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #a29bfe; box-shadow: 0 0 10px #a29bfe;"></div>
+                <span>性能层 (Performance)</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tooltip"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    
+    <script>
+        // 知识图谱数据
+        const graphData = 
+        {
+            nodes: [{"id": "E1", "name": "ISAC", "type": "核心范式", "layer": "概念层", "definition": "集成传感与通信，使用无线通信基础设施进行环境 sensing", "importance": 5}, {"id": "E2", "name": "6G", "type": "网络代际", "layer": "概念层", "definition": "第六代移动通信网络，支持 sensing 等新功能", "importance": 5}, {"id": "E3", "name": "O-RAN", "type": "架构标准", "layer": "架构层", "definition": "开放无线接入网，提供智能、开放的 RAN 架构", "importance": 5}, {"id": "E4", "name": "O-DU", "type": "网元", "layer": "架构层", "definition": "O-RAN 分布式单元，负责基带处理", "importance": 4}, {"id": "E5", "name": "O-RU", "type": "网元", "layer": "架构层", "definition": "O-RAN 射频单元，负责 RF 处理", "importance": 4}, {"id": "E6", "name": "Near-RT RIC", "type": "控制器", "layer": "架构层", "definition": "近实时 RAN 智能控制器，延迟<10ms", "importance": 4}, {"id": "E7", "name": "Non-RT RIC", "type": "控制器", "layer": "架构层", "definition": "非实时 RAN 智能控制器，延迟>1s", "importance": 3}, {"id": "E8", "name": "xApps", "type": "应用", "layer": "应用层", "definition": "运行在 Near-RT RIC 上的应用", "importance": 4}, {"id": "E9", "name": "dApps", "type": "应用", "layer": "应用层", "definition": "运行在 O-DU 上的分布式应用，处理 sensing", "importance": 4}, {"id": "E10", "name": "E2SM-SENS", "type": "服务模型", "layer": "接口层", "definition": "E2 服务模型 for SENSing，支持 sensing 遥测订阅", "importance": 5}, {"id": "E11", "name": "E2 接口", "type": "接口", "layer": "接口层", "definition": "Near-RT RIC 与 O-CU/O-DU 之间的接口", "importance": 3}, {"id": "E12", "name": "Open Fronthaul", "type": "接口", "layer": "接口层", "definition": "O-DU 与 O-RU 之间的开放前传接口", "importance": 4}, {"id": "E13", "name": "IQ 采样", "type": "信号处理", "layer": "物理层", "definition": "同相/正交采样，用于提取 sensing 特征", "importance": 4}, {"id": "E14", "name": "波束成形", "type": "天线技术", "layer": "物理层", "definition": "使用天线阵列定向发射/接收", "importance": 4}, {"id": "E15", "name": "全双工", "type": "通信技术", "layer": "物理层", "definition": "同时同频进行发射和接收", "importance": 4}, {"id": "E16", "name": "延迟特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标距离信息", "importance": 3}, {"id": "E17", "name": "多普勒特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标速度信息", "importance": 3}, {"id": "E18", "name": "角度特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标方向信息", "importance": 3}, {"id": "E19", "name": "单静态传感", "type": "sensing 模式", "layer": "应用层", "definition": "发射和接收在同一位置的 sensing", "importance": 4}, {"id": "E20", "name": "双静态传感", "type": "sensing 模式", "layer": "应用层", "definition": "发射和接收在不同位置的 sensing", "importance": 3}, {"id": "E21", "name": "协作传感", "type": "sensing 模式", "layer": "应用层", "definition": "多个基站协作进行 sensing", "importance": 3}, {"id": "E22", "name": "端到端延迟", "type": "性能指标", "layer": "性能层", "definition": "sensing 闭环控制的总延迟", "importance": 4}, {"id": "E23", "name": "闭环控制", "type": "控制模式", "layer": "应用层", "definition": "基于 sensing 反馈的实时控制", "importance": 4}],
+            edges: [{"source": "ISAC", "target": "6G", "type": "属于"}, {"source": "ISAC", "target": "O-RAN", "type": "集成于"}, {"source": "O-DU", "target": "O-RAN", "type": "属于"}, {"source": "O-RU", "target": "O-RAN", "type": "属于"}, {"source": "Near-RT RIC", "target": "O-RAN", "type": "属于"}, {"source": "xApps", "target": "Near-RT RIC", "type": "运行于"}, {"source": "dApps", "target": "O-DU", "type": "运行于"}, {"source": "E2SM-SENS", "target": "xApps", "type": "服务于"}, {"source": "E2SM-SENS", "target": "ISAC", "type": "支持"}, {"source": "E2SM-SENS", "target": "E2 接口", "type": "使用"}, {"source": "Open Fronthaul", "target": "O-DU", "type": "连接"}, {"source": "Open Fronthaul", "target": "O-RU", "type": "连接"}, {"source": "dApps", "target": "IQ 采样", "type": "处理"}, {"source": "IQ 采样", "target": "延迟特征", "type": "提取"}, {"source": "IQ 采样", "target": "多普勒特征", "type": "提取"}, {"source": "IQ 采样", "target": "角度特征", "type": "提取"}, {"source": "波束成形", "target": "ISAC", "type": "用于"}, {"source": "全双工", "target": "ISAC", "type": "用于"}, {"source": "单静态传感", "target": "ISAC", "type": "模式"}, {"source": "双静态传感", "target": "ISAC", "type": "模式"}, {"source": "协作传感", "target": "ISAC", "type": "模式"}, {"source": "闭环控制", "target": "ISAC", "type": "实现"}, {"source": "端到端延迟", "target": "闭环控制", "type": "衡量"}]
+        };
+        
+        // Three.js 场景
+        let scene, camera, renderer;
+        let nodes = [];
+        let edges = [];
+        let animationId;
+        let isAnimating = true;
+        
+        // 颜色映射
+        const layerColors = {
+            '概念层': 0xff6b6b,
+            '架构层': 0x4ecdc4,
+            '应用层': 0x45b7d1,
+            '接口层': 0x96ceb4,
+            '物理层': 0xffeaa7,
+            '特征层': 0xdfe6e9,
+            '性能层': 0xa29bfe
+        };
+        
+        // 节点大小映射
+        const importanceSize = {
+            5: 2.5,
+            4: 2.0,
+            3: 1.5
+        };
+        
+        function init() {
+            // 创建场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000011);
+            
+            // 创建相机
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 50;
+            
+            // 创建渲染器
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('canvas'),
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // 添加环境光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            // 添加点光源
+            const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
+            pointLight.position.set(0, 0, 20);
+            scene.add(pointLight);
+            
+            // 创建节点
+            createNodes();
+            
+            // 创建边
+            createEdges();
+            
+            // 创建背景粒子
+            createBackgroundParticles();
+            
+            // 添加鼠标交互
+            setupInteraction();
+            
+            // 隐藏加载动画
+            setTimeout(() => {
+                document.getElementById('loading').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 1000);
+            }, 1500);
+            
+            // 开始动画
+            animate();
+        }
+        
+        function createNodes() {
+            graphData.nodes.forEach((nodeData, index) => {
+                const geometry = new THREE.SphereGeometry(importanceSize[nodeData.importance] || 1.5, 32, 32);
+                const color = layerColors[nodeData.layer] || 0xffffff;
+                const material = new THREE.MeshPhongMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.5,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                
+                const sphere = new THREE.Mesh(geometry, material);
+                
+                // 随机分布在球面上
+                const phi = Math.acos(-1 + (2 * index) / graphData.nodes.length);
+                const theta = Math.sqrt(graphData.nodes.length * Math.PI) * phi;
+                
+                sphere.position.x = 30 * Math.cos(theta) * Math.sin(phi);
+                sphere.position.y = 30 * Math.sin(theta) * Math.sin(phi);
+                sphere.position.z = 30 * Math.cos(phi);
+                
+                sphere.userData = nodeData;
+                scene.add(sphere);
+                nodes.push(sphere);
+                
+                // 添加发光效果
+                const glowGeometry = new THREE.SphereGeometry(importanceSize[nodeData.importance] * 1.5, 32, 32);
+                const glowMaterial = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.3,
+                    side: THREE.BackSide
+                });
+                const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+                sphere.add(glow);
+                
+                // 添加标签
+                createLabel(nodeData.name, sphere);
+            });
+        }
+        
+        function createEdges() {
+            graphData.edges.forEach(edgeData => {
+                const sourceNode = nodes.find(n => n.userData.name === edgeData.source);
+                const targetNode = nodes.find(n => n.userData.name === edgeData.target);
+                
+                if (sourceNode && targetNode) {
+                    const geometry = new THREE.BufferGeometry().setFromPoints([
+                        sourceNode.position,
+                        targetNode.position
+                    ]);
+                    
+                    const material = new THREE.LineBasicMaterial({
+                        color: 0x00ffff,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+                    
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line);
+                    edges.push(line);
+                    
+                    // 添加流动粒子效果
+                    createFlowParticle(sourceNode.position, targetNode.position);
+                }
+            });
+        }
+        
+        function createFlowParticle(start, end) {
+            const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const particle = new THREE.Mesh(geometry, material);
+            scene.add(particle);
+            
+            // 动画
+            const duration = 2000 + Math.random() * 2000;
+            gsap.to(particle.position, {
+                x: end.x,
+                y: end.y,
+                z: end.z,
+                duration: duration / 1000,
+                ease: "linear",
+                repeat: -1,
+                onStart: () => {
+                    particle.position.copy(start);
+                }
+            });
+        }
+        
+        function createBackgroundParticles() {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            
+            for (let i = 0; i < 2000; i++) {
+                vertices.push(
+                    (Math.random() - 0.5) * 200,
+                    (Math.random() - 0.5) * 200,
+                    (Math.random() - 0.5) * 200
+                );
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            
+            const material = new THREE.PointsMaterial({
+                color: 0x00ffff,
+                size: 0.5,
+                transparent: true,
+                opacity: 0.5
+            });
+            
+            const particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+            
+            // 缓慢旋转
+            gsap.to(particles.rotation, {
+                y: Math.PI * 2,
+                duration: 60,
+                repeat: -1,
+                ease: "linear"
+            });
+        }
+        
+        function createLabel(text, sphere) {
+            // 简化版本：使用 HTML 标签而不是 Canvas
+            // 实际项目中可以用 CSS3DRenderer
+        }
+        
+        function setupInteraction() {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            document.addEventListener('mousemove', (event) => {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(nodes);
+                
+                const tooltip = document.getElementById('tooltip');
+                
+                if (intersects.length > 0) {
+                    const node = intersects[0].object;
+                    const data = node.userData;
+                    
+                    tooltip.innerHTML = `
+                        <h3>${data.name}</h3>
+                        <p><strong>类型:</strong> ${data.type}</p>
+                        <p><strong>层级:</strong> ${data.layer}</p>
+                        <p><strong>定义:</strong> ${data.definition}</p>
+                        <p><strong>重要度:</strong> ${'⭐'.repeat(data.importance)}</p>
+                    `;
+                    
+                    tooltip.style.left = (event.clientX + 15) + 'px';
+                    tooltip.style.top = (event.clientY + 15) + 'px';
+                    tooltip.style.opacity = '1';
+                    
+                    document.body.style.cursor = 'pointer';
+                } else {
+                    tooltip.style.opacity = '0';
+                    document.body.style.cursor = 'default';
+                }
+            });
+            
+            // 鼠标滚轮缩放
+            document.addEventListener('wheel', (event) => {
+                camera.position.z += event.deltaY * 0.05;
+                camera.position.z = Math.max(20, Math.min(100, camera.position.z));
+            });
+            
+            // 拖拽旋转
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            document.addEventListener('mousedown', () => isDragging = true);
+            document.addEventListener('mouseup', () => isDragging = false);
+            document.addEventListener('mousemove', (event) => {
+                if (isDragging) {
+                    const deltaMove = {
+                        x: event.offsetX - previousMousePosition.x,
+                        y: event.offsetY - previousMousePosition.y
+                    };
+                    
+                    scene.rotation.y += deltaMove.x * 0.005;
+                    scene.rotation.x += deltaMove.y * 0.005;
+                }
+                
+                previousMousePosition = {
+                    x: event.offsetX,
+                    y: event.offsetY
+                };
+            });
+        }
+        
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            if (isAnimating) {
+                // 缓慢旋转整个场景
+                scene.rotation.y += 0.002;
+                
+                // 节点脉动
+                nodes.forEach((node, index) => {
+                    const scale = 1 + Math.sin(Date.now() * 0.001 + index) * 0.1;
+                    node.scale.set(scale, scale, scale);
+                });
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // 工具栏功能
+        function resetView() {
+            gsap.to(camera.position, {
+                z: 50,
+                duration: 1
+            });
+            gsap.to(scene.rotation, {
+                x: 0,
+                y: 0,
+                duration: 1
+            });
+        }
+        
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+        }
+        
+        function expandAll() {
+            gsap.to(nodes, {
+                scale: 1.5,
+                duration: 0.5,
+                stagger: 0.02
+            });
+        }
+        
+        function collapseAll() {
+            gsap.to(nodes, {
+                scale: 0.8,
+                duration: 0.5,
+                stagger: 0.02
+            });
+        }
+        
+        function exportImage() {
+            renderer.render(scene, camera);
+            const dataURL = renderer.domElement.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = 'ISAC_knowledge_graph_fancy.png';
+            a.click();
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 启动
+        init();
+    </script>
+</body>
+</html>

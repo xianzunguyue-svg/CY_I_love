@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISAC 知识图谱 - 终极版 v3 (超级详细)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; overflow-x: hidden; background: #0a0a1a; }
+        
+        #mode-switch {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000;
+            display: flex; gap: 15px; background: rgba(0,0,0,0.9); padding: 15px 40px;
+            border-radius: 50px; border: 2px solid #00d4ff; box-shadow: 0 0 30px rgba(0,212,255,0.5);
+        }
+        .mode-btn {
+            background: transparent; color: #fff; border: 2px solid #666; padding: 15px 35px;
+            border-radius: 30px; cursor: pointer; font-size: 16px; font-weight: bold;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border-color: #00d4ff; box-shadow: 0 0 30px rgba(0,212,255,0.6);
+        }
+        .mode-btn:hover { transform: scale(1.08); }
+        
+        #view-3d { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        #view-3d canvas { display: block; }
+        
+        #view-2d {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); overflow-y: auto;
+        }
+        
+        .summary-panel { max-width: 1400px; margin: 0 auto; padding: 30px; }
+        
+        .summary-card, .detail-section {
+            background: rgba(255,255,255,0.98); border-radius: 20px; padding: 40px;
+            margin-bottom: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .summary-title { font-size: 2em; color: #1a1a2e; margin-bottom: 20px; font-weight: bold; }
+        .section-title {
+            font-size: 1.6em; color: #1a1a2e; margin-bottom: 25px;
+            padding-bottom: 15px; border-bottom: 3px solid #00d4ff;
+        }
+        
+        .summary-meta {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .meta-item {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; padding: 20px; border-radius: 15px;
+        }
+        .meta-label { font-size: 0.9em; opacity: 0.9; margin-bottom: 5px; }
+        .meta-value { font-size: 1.1em; font-weight: bold; }
+        
+        .summary-section { margin: 35px 0; }
+        
+        .detail-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px; margin: 15px 0; border-radius: 15px;
+            border-left: 5px solid #00d4ff; cursor: pointer;
+            transition: all 0.3s;
+        }
+        .detail-card:hover {
+            transform: translateX(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-left-width: 8px;
+        }
+        .detail-card.highlight {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            border-left-color: #ffc107;
+        }
+        .detail-card-header {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+        }
+        .detail-card-icon { font-size: 1.8em; }
+        .detail-card-title { font-size: 1.3em; font-weight: bold; color: #1a1a2e; }
+        .detail-card-layer {
+            background: #00d4ff; color: white; padding: 5px 15px;
+            border-radius: 20px; font-size: 0.85em; margin-left: auto;
+        }
+        .detail-card-preview { color: #555; line-height: 1.7; margin-bottom: 12px; font-size: 1em; }
+        .detail-card-features {
+            background: rgba(255,255,255,0.6); padding: 15px 20px;
+            border-radius: 10px; margin: 15px 0;
+        }
+        .features-title { font-weight: bold; color: #00d4ff; margin-bottom: 10px; }
+        .features-list { margin-left: 20px; color: #555; line-height: 1.8; }
+        .features-list li { margin: 5px 0; }
+        .detail-card-components { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+        .component-badge {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; padding: 8px 18px; border-radius: 20px;
+            font-size: 0.9em; font-weight: bold;
+        }
+        .detail-card-more {
+            color: #00d4ff; font-weight: bold; font-size: 0.95em;
+            display: flex; align-items: center; gap: 8px; margin-top: 15px;
+        }
+        
+        .concept-map, .relations-section {
+            background: rgba(255,255,255,0.98); border-radius: 20px; padding: 40px;
+            margin-bottom: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .layer-group {
+            margin: 30px 0; padding: 20px;
+            background: #f8f9fa; border-radius: 15px;
+            border-left: 5px solid #00d4ff;
+        }
+        .layer-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; background: white; border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .layer-title { font-size: 1.3em; font-weight: bold; }
+        .layer-toggle { color: #666; font-size: 0.9em; }
+        .layer-content { display: block; transition: all 0.3s; }
+        .layer-content.collapsed { display: none; }
+        
+        .node-card {
+            background: white; padding: 25px; margin: 15px 0;
+            border-radius: 12px; border-left: 4px solid #00d4ff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s; cursor: pointer;
+        }
+        .node-card:hover {
+            transform: translateX(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-left-width: 8px;
+        }
+        .node-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .node-name { font-size: 1.3em; font-weight: bold; color: #1a1a2e; }
+        .node-importance { font-size: 1.3em; }
+        .node-type-badge {
+            display: inline-block; background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; padding: 6px 18px; border-radius: 20px; font-size: 0.85em;
+            margin-bottom: 12px; font-weight: bold;
+        }
+        .node-definition { color: #555; line-height: 1.7; margin-bottom: 12px; }
+        .node-more {
+            color: #00d4ff; font-weight: bold; font-size: 0.95em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        
+        .relation-item {
+            display: flex; align-items: center; gap: 10px; padding: 18px;
+            margin: 12px 0; background: #f8f9fa; border-radius: 12px;
+            flex-wrap: wrap; cursor: pointer; transition: all 0.3s;
+        }
+        .relation-item:hover {
+            background: #e3f2fd; transform: scale(1.02);
+        }
+        .relation-source, .relation-target {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; padding: 10px 22px; border-radius: 25px; font-weight: bold;
+        }
+        .relation-type {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: white; padding: 10px 22px; border-radius: 25px; font-weight: bold;
+        }
+        .relation-arrow { color: #666; font-size: 1.3em; font-weight: bold; }
+        .relation-desc { color: #666; font-size: 0.9em; margin-left: 10px; font-style: italic; }
+        
+        .toolbar {
+            position: fixed; top: 100px; right: 20px; display: flex;
+            flex-direction: column; gap: 10px; z-index: 1000;
+        }
+        .toolbar button {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; border: none; padding: 15px 25px; border-radius: 25px;
+            cursor: pointer; font-size: 14px; font-weight: bold;
+            transition: all 0.3s; box-shadow: 0 0 20px rgba(0,212,255,0.5);
+        }
+        .toolbar button:hover { transform: scale(1.1); box-shadow: 0 0 30px rgba(0,212,255,0.8); }
+        
+        .stats-panel {
+            position: fixed; bottom: 20px; left: 20px; display: grid;
+            grid-template-columns: repeat(2, 1fr); gap: 15px; z-index: 1000;
+        }
+        .stat-card {
+            background: rgba(0,212,255,0.15); backdrop-filter: blur(10px);
+            border: 2px solid #00d4ff; border-radius: 15px; padding: 20px;
+            text-align: center; color: white;
+            box-shadow: 0 0 30px rgba(0,212,255,0.4);
+        }
+        .stat-number { font-size: 2.5em; font-weight: bold; color: #00d4ff; }
+        .stat-label { margin-top: 5px; font-size: 0.9em; }
+        
+        /* 详情弹窗 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 20000; display: none;
+            justify-content: center; align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 3px solid #00d4ff; border-radius: 25px;
+            width: 90%; max-width: 800px; max-height: 90vh;
+            overflow-y: auto; box-shadow: 0 0 80px rgba(0,212,255,0.7);
+            animation: modalSlideIn 0.4s ease-out;
+        }
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-60px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; padding: 35px; border-radius: 22px 22px 0 0;
+            position: relative;
+        }
+        .modal-title { font-size: 2.2em; font-weight: bold; margin-bottom: 10px; }
+        .modal-subtitle { font-size: 1.1em; opacity: 0.9; }
+        .modal-close {
+            position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2);
+            border: none; color: white; font-size: 2em; width: 50px; height: 50px;
+            border-radius: 50%; cursor: pointer; transition: all 0.3s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.4); transform: rotate(90deg); }
+        .modal-body { padding: 40px; color: white; }
+        .modal-section { margin: 30px 0; }
+        .modal-label { color: #00d4ff; font-weight: bold; margin-bottom: 15px; font-size: 1.2em; }
+        .modal-value { color: #fff; line-height: 1.9; font-size: 1.1em; }
+        .modal-list { background: rgba(255,255,255,0.05); padding: 25px; border-radius: 12px; margin: 20px 0; }
+        .modal-list-item {
+            padding: 15px; margin: 12px 0; background: rgba(0,212,255,0.1);
+            border-radius: 8px; border-left: 4px solid #00d4ff;
+            display: flex; align-items: flex-start; gap: 12px;
+        }
+        .modal-list-item::before { content: "✨"; font-size: 1.3em; }
+        
+        #info-panel {
+            position: fixed; top: 50%; right: 20px; transform: translateY(-50%);
+            width: 380px; max-height: 80vh; overflow-y: auto;
+            background: rgba(0,0,0,0.95); border: 2px solid #00d4ff;
+            border-radius: 20px; padding: 25px; color: white;
+            z-index: 1000; display: none;
+            box-shadow: 0 0 40px rgba(0,212,255,0.5);
+        }
+        #info-panel h3 {
+            color: #00d4ff; margin-bottom: 15px; font-size: 1.5em;
+            padding-bottom: 10px; border-bottom: 2px solid #00d4ff;
+        }
+        #info-panel .info-row { margin: 15px 0; }
+        #info-panel .info-label { color: #00d4ff; font-weight: bold; margin-bottom: 5px; }
+        #info-panel .info-value { color: #fff; line-height: 1.6; }
+        #info-panel .close-btn {
+            position: absolute; top: 15px; right: 15px; background: none;
+            border: none; color: #fff; font-size: 1.5em; cursor: pointer;
+        }
+        
+        .loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0a0a1a; display: flex; justify-content: center;
+            align-items: center; z-index: 9999;
+        }
+        .loading-spinner {
+            width: 100px; height: 100px; border: 4px solid rgba(0,212,255,0.3);
+            border-top-color: #00d4ff; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .legend {
+            position: fixed; bottom: 20px; right: 20px;
+            background: rgba(0,0,0,0.9); border: 2px solid #00d4ff;
+            border-radius: 15px; padding: 20px; color: white; z-index: 1000;
+        }
+        .legend h4 { color: #00d4ff; margin-bottom: 15px; }
+        .legend-item { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .legend-color { width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+        
+        @keyframes highlight {
+            0%, 100% { background: #f8f9fa; }
+            50% { background: #00d4ff; }
+        }
+        .highlighted { animation: highlight 1s ease-in-out 3; }
+        
+        /* 目录导航 */
+        .toc {
+            position: fixed; top: 50%; left: 20px; transform: translateY(-50%);
+            background: rgba(0,0,0,0.8); border: 2px solid #00d4ff;
+            border-radius: 15px; padding: 20px; z-index: 1000;
+        }
+        .toc h4 { color: #00d4ff; margin-bottom: 15px; font-size: 1.1em; }
+        .toc ul { list-style: none; }
+        .toc li { margin: 10px 0; }
+        .toc a {
+            color: white; text-decoration: none; font-size: 0.9em;
+            transition: all 0.3s; display: block; padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .toc a:hover { background: rgba(0,212,255,0.3); color: #00d4ff; }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading"><div class="loading-spinner"></div></div>
+    
+    <div id="mode-switch">
+        <button class="mode-btn active" onclick="switchMode('3d')">🌌 3D 粒子模式</button>
+        <button class="mode-btn" onclick="switchMode('2d')">📊 2D 详细模式</button>
+    </div>
+    
+    <div id="view-3d">
+        <canvas id="canvas"></canvas>
+        <div class="toolbar">
+            <button onclick="resetView()">🎯 重置视图</button>
+            <button onclick="toggleAnimation()">⚡ 暂停/继续</button>
+            <button onclick="exportImage()">📷 导出图片</button>
+        </div>
+        <div class="stats-panel">
+            <div class="stat-card"><div class="stat-number">23</div><div class="stat-label">NODES</div></div>
+            <div class="stat-card"><div class="stat-number">23</div><div class="stat-label">EDGES</div></div>
+            <div class="stat-card"><div class="stat-number">7</div><div class="stat-label">LAYERS</div></div>
+            <div class="stat-card"><div class="stat-number">5★</div><div class="stat-label">CORE</div></div>
+        </div>
+        <div id="info-panel">
+            <button class="close-btn" onclick="closeInfo()">×</button>
+            <h3 id="info-title">Node Info</h3>
+            <div id="info-content"></div>
+        </div>
+        <div class="legend">
+            <h4>📊 LAYER LEGEND</h4>
+            <div class="legend-item"><div class="legend-color" style="background:#ff6b6b"></div><span>概念层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#4ecdc4"></div><span>架构层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#45b7d1"></div><span>应用层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#96ceb4"></div><span>接口层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#ffeaa7"></div><span>物理层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#a29bfe"></div><span>性能层</span></div>
+        </div>
+    </div>
+    
+    <div id="view-2d">
+        <div class="summary-panel">
+            <div class="summary-card">
+                <h1 class="summary-title">📄 Toward Native ISAC Support in O-RAN Architectures for 6G</h1>
+                <div class="summary-meta">
+                    <div class="meta-item"><div class="meta-label">AUTHORS</div><div class="meta-value">Eduardo Baena, Rajesh Krishnan, Mai Vu, Gil Zussman, Dimitrios Koutsonikolas</div></div>
+                    <div class="meta-item"><div class="meta-label">SOURCE</div><div class="meta-value">arXiv:2603.03607</div></div>
+                    <div class="meta-item"><div class="meta-label">DATE</div><div class="meta-value">2026-03-04</div></div>
+                    <div class="meta-item"><div class="meta-label">DOI</div><div class="meta-value">10.48550/arXiv.2603.03607</div></div>
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">🎯 研究问题</h2>
+                    <p style="font-size: 1.15em; color: #333; margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 12px; border-left: 5px solid #ff6b6b;">
+                        当前 O-RAN 规范缺乏对 sensing 的架构支持
+                    </p>
+                    
+        <div class="detail-card" onclick="showChallengeDetail({"id": "C1", "name": "无服务模型暴露物理层可观测数据", "detail": "现有 O-RAN 服务模型不支持 sensing 遥测数据的订阅和传输"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">⚠️</span>
+                <span class="detail-card-title">无服务模型暴露物理层可观测数据</span>
+            </div>
+            <div class="detail-card-preview">现有 O-RAN 服务模型不支持 sensing 遥测数据的订阅和传输...</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showChallengeDetail({"id": "C2", "name": "无执行框架支持 sub-millisecond sensing 任务", "detail": "sensing 需要亚毫秒级延迟，当前 O-RAN 架构无法满足"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">⚠️</span>
+                <span class="detail-card-title">无执行框架支持 sub-millisecond sensing 任务</span>
+            </div>
+            <div class="detail-card-preview">sensing 需要亚毫秒级延迟，当前 O-RAN 架构无法满足...</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showChallengeDetail({"id": "C3", "name": "前传接口无法关联发射波形与反射", "detail": "Open Fronthaul 缺少必要的元数据来支持 monostatic sensing"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">⚠️</span>
+                <span class="detail-card-title">前传接口无法关联发射波形与反射</span>
+            </div>
+            <div class="detail-card-preview">Open Fronthaul 缺少必要的元数据来支持 monostatic sensing...</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">💡 核心贡献</h2>
+                    
+        <div class="detail-card highlight" onclick="showContributionDetail({"id": "CONTRIB1", "name": "Sensing dApps", "layer": "O-DU Layer", "description": "在 O-DU 层指定 sensing dApps，处理 IQ 采样以提取特征", "features": ["处理 IQ 采样数据", "提取延迟 (delay) 特征", "提取多普勒 (Doppler) 特征", "提取角度 (angular) 特征"]})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">💡</span>
+                <span class="detail-card-title">Sensing dApps</span>
+                <span class="detail-card-layer">O-DU Layer</span>
+            </div>
+            <div class="detail-card-preview">在 O-DU 层指定 sensing dApps，处理 IQ 采样以提取特征</div>
+            <div class="detail-card-features">
+                <div class="features-title">✨ 主要功能:</div>
+                <ul class="features-list"><li>处理 IQ 采样数据</li><li>提取延迟 (delay) 特征</li><li>提取多普勒 (Doppler) 特征</li><li>提取角度 (angular) 特征</li></ul>
+            </div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card highlight" onclick="showContributionDetail({"id": "CONTRIB2", "name": "E2SM-SENS 服务模型", "layer": "Near-RT RIC Layer", "description": "定义 E2SM-SENS 服务模型，使 xApps 能够订阅 sensing 遥测数据", "features": ["可配置的周期性订阅", "支持 sensing 遥测数据传输", "与现有 E2SM 架构兼容"]})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">💡</span>
+                <span class="detail-card-title">E2SM-SENS 服务模型</span>
+                <span class="detail-card-layer">Near-RT RIC Layer</span>
+            </div>
+            <div class="detail-card-preview">定义 E2SM-SENS 服务模型，使 xApps 能够订阅 sensing 遥测数据</div>
+            <div class="detail-card-features">
+                <div class="features-title">✨ 主要功能:</div>
+                <ul class="features-list"><li>可配置的周期性订阅</li><li>支持 sensing 遥测数据传输</li><li>与现有 E2SM 架构兼容</li></ul>
+            </div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card highlight" onclick="showContributionDetail({"id": "CONTRIB3", "name": "Open Fronthaul 元数据", "layer": "Fronthaul Layer", "description": "识别 Open Fronthaul 接口所需的元数据，支持波形 - 回波关联", "features": ["波形发射时间戳", "回波接收时间戳", "天线配置信息", "波束成形权重"]})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">💡</span>
+                <span class="detail-card-title">Open Fronthaul 元数据</span>
+                <span class="detail-card-layer">Fronthaul Layer</span>
+            </div>
+            <div class="detail-card-preview">识别 Open Fronthaul 接口所需的元数据，支持波形 - 回波关联</div>
+            <div class="detail-card-features">
+                <div class="features-title">✨ 主要功能:</div>
+                <ul class="features-list"><li>波形发射时间戳</li><li>回波接收时间戳</li><li>天线配置信息</li><li>波束成形权重</li></ul>
+            </div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">🏗️ 架构层次</h2>
+                    
+        <div class="detail-card" onclick="showArchitectureDetail({"name": "应用层", "components": ["xApps", "Non-RT RIC"], "function": "高层 sensing 应用和策略"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🏗️</span>
+                <span class="detail-card-title">应用层</span>
+            </div>
+            <div class="detail-card-preview">高层 sensing 应用和策略</div>
+            <div class="detail-card-components"><span class='component-badge'>xApps</span><span class='component-badge'>Non-RT RIC</span></div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showArchitectureDetail({"name": "近实时层", "components": ["Near-RT RIC", "E2SM-SENS"], "function": "近实时 sensing 控制 (<10ms)"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🏗️</span>
+                <span class="detail-card-title">近实时层</span>
+            </div>
+            <div class="detail-card-preview">近实时 sensing 控制 (<10ms)</div>
+            <div class="detail-card-components"><span class='component-badge'>Near-RT RIC</span><span class='component-badge'>E2SM-SENS</span></div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showArchitectureDetail({"name": "分布式单元层", "components": ["O-DU", "dApps"], "function": "IQ 采样处理和特征提取"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🏗️</span>
+                <span class="detail-card-title">分布式单元层</span>
+            </div>
+            <div class="detail-card-preview">IQ 采样处理和特征提取</div>
+            <div class="detail-card-components"><span class='component-badge'>O-DU</span><span class='component-badge'>dApps</span></div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showArchitectureDetail({"name": "射频单元层", "components": ["O-RU", "Open Fronthaul"], "function": "波形发射和回波接收"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🏗️</span>
+                <span class="detail-card-title">射频单元层</span>
+            </div>
+            <div class="detail-card-preview">波形发射和回波接收</div>
+            <div class="detail-card-components"><span class='component-badge'>O-RU</span><span class='component-badge'>Open Fronthaul</span></div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">🔬 关键技术</h2>
+                    
+        <div class="detail-card" onclick="showTechnologyDetail({"name": "ISAC", "full_name": "Integrated Sensing and Communication", "chinese": "集成传感与通信", "description": "使用无线通信基础设施进行环境 sensing 的新兴范式", "benefits": ["频谱共享 - 通信和 sensing 使用相同频段", "硬件共享 - 使用相同的 RF 链和天线", "成本降低 - 无需独立的 sensing 基础设施"]})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🔬</span>
+                <span class="detail-card-title">ISAC 集成传感与通信</span>
+            </div>
+            <div class="detail-card-preview">使用无线通信基础设施进行环境 sensing 的新兴范式</div>
+            <div class='detail-card-features'><div class='features-title'>✨ 优势/作用:</div><ul class='features-list'><li>频谱共享 - 通信和 sensing 使用相同频段</li><li>硬件共享 - 使用相同的 RF 链和天线</li><li>成本降低 - 无需独立的 sensing 基础设施</li></ul></div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showTechnologyDetail({"name": "O-RAN", "full_name": "Open Radio Access Network", "chinese": "开放无线接入网", "description": "开放、智能、虚拟化的 RAN 架构", "key_interfaces": ["E2", "Open Fronthaul", "A1", "O1"]})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🔬</span>
+                <span class="detail-card-title">O-RAN 开放无线接入网</span>
+            </div>
+            <div class="detail-card-preview">开放、智能、虚拟化的 RAN 架构</div>
+            <div class='detail-card-preview'></div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showTechnologyDetail({"name": "Monostatic Sensing", "chinese": "单静态传感", "description": "发射和接收在同一位置（基站）的 sensing 模式", "advantage": "简化同步和校准"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🔬</span>
+                <span class="detail-card-title">Monostatic Sensing 单静态传感</span>
+            </div>
+            <div class="detail-card-preview">发射和接收在同一位置（基站）的 sensing 模式</div>
+            <div class='detail-card-preview'>简化同步和校准</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showTechnologyDetail({"name": "Beamforming", "chinese": "波束成形", "description": "使用天线阵列定向发射/接收信号", "role_in_isac": "提高 sensing 分辨率和通信质量"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🔬</span>
+                <span class="detail-card-title">Beamforming 波束成形</span>
+            </div>
+            <div class="detail-card-preview">使用天线阵列定向发射/接收信号</div>
+            <div class='detail-card-preview'>提高 sensing 分辨率和通信质量</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showTechnologyDetail({"name": "Full-Duplex", "chinese": "全双工", "description": "同时同频进行发射和接收", "role_in_isac": "实现连续的 sensing 和通信"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🔬</span>
+                <span class="detail-card-title">Full-Duplex 全双工</span>
+            </div>
+            <div class="detail-card-preview">同时同频进行发射和接收</div>
+            <div class='detail-card-preview'>实现连续的 sensing 和通信</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">📊 验证方法</h2>
+                    <div class="detail-card" onclick="showValidationDetail({"title": "验证方法", "method": "原型实现", "technologies_used": ["Beamforming", "Full-Duplex"], "metrics": [{"name": "端到端延迟", "result": "中值延迟适合近实时 sensing 应用", "target": "<10ms"}, {"name": "闭环控制", "result": "成功演示闭环 sensing 控制"}]}, null)">
+                        <div class="detail-card-header">
+                            <span class="detail-card-icon">🔧</span>
+                            <span class="detail-card-title">原型实现</span>
+                        </div>
+                        <div class="detail-card-preview">使用波束成形和全双工技术进行原型验证</div>
+                        <div class="detail-card-more">📖 点击查看详细说明</div>
+                    </div>
+                    
+        <div class="detail-card" onclick="showValidationDetail({"title": "验证方法", "method": "原型实现", "technologies_used": ["Beamforming", "Full-Duplex"], "metrics": [{"name": "端到端延迟", "result": "中值延迟适合近实时 sensing 应用", "target": "<10ms"}, {"name": "闭环控制", "result": "成功演示闭环 sensing 控制"}]}, {"name": "端到端延迟", "result": "中值延迟适合近实时 sensing 应用", "target": "<10ms"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">📊</span>
+                <span class="detail-card-title">端到端延迟</span>
+            </div>
+            <div class="detail-card-preview">中值延迟适合近实时 sensing 应用</div>
+            <div class='detail-card-preview'>目标：<10ms</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showValidationDetail({"title": "验证方法", "method": "原型实现", "technologies_used": ["Beamforming", "Full-Duplex"], "metrics": [{"name": "端到端延迟", "result": "中值延迟适合近实时 sensing 应用", "target": "<10ms"}, {"name": "闭环控制", "result": "成功演示闭环 sensing 控制"}]}, {"name": "闭环控制", "result": "成功演示闭环 sensing 控制"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">📊</span>
+                <span class="detail-card-title">闭环控制</span>
+            </div>
+            <div class="detail-card-preview">成功演示闭环 sensing 控制</div>
+            
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">🔮 未来方向</h2>
+                    
+        <div class="detail-card" onclick="showFutureDetail({"name": "Bistatic Sensing", "chinese": "双静态传感", "description": "发射和接收在不同位置的 sensing 模式"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🔮</span>
+                <span class="detail-card-title">Bistatic Sensing 双静态传感</span>
+            </div>
+            <div class="detail-card-preview">发射和接收在不同位置的 sensing 模式</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+        <div class="detail-card" onclick="showFutureDetail({"name": "Cooperative Sensing", "chinese": "协作传感", "description": "多个基站协作进行 sensing"})">
+            <div class="detail-card-header">
+                <span class="detail-card-icon">🔮</span>
+                <span class="detail-card-title">Cooperative Sensing 协作传感</span>
+            </div>
+            <div class="detail-card-preview">多个基站协作进行 sensing</div>
+            <div class="detail-card-more">📖 点击查看详细说明</div>
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="concept-map">
+                <h2 class="section-title">🧠 概念地图 (点击卡片查看详情)</h2>
+                
+        <div class="layer-group" style="border-left-color: #ff6b6b;">
+            <div class="layer-header" onclick="toggleLayer(this)" style="cursor: pointer;">
+                <div class="layer-title" style="color: #ff6b6b;">📁 概念层 (2个实体)</div>
+                <div class="layer-toggle">▼ 点击展开/折叠</div>
+            </div>
+            <div class="layer-content">
+        
+                <div class="node-card" style="border-left-color: #ff6b6b;" onclick='showNodeDetail({"id": "E1", "name": "ISAC", "type": "核心范式", "layer": "概念层", "definition": "集成传感与通信，使用无线通信基础设施进行环境 sensing", "importance": 5}, [{"source": "ISAC", "target": "6G", "type": "属于", "description": "ISAC 是 6G 的关键技术"}, {"source": "ISAC", "target": "O-RAN", "type": "集成于", "description": "ISAC 需要集成到 O-RAN 架构"}, {"source": "E2SM-SENS", "target": "ISAC", "type": "支持", "description": "E2SM-SENS 支持 ISAC 功能"}, {"source": "波束成形", "target": "ISAC", "type": "用于", "description": "波束成形用于 ISAC"}, {"source": "全双工", "target": "ISAC", "type": "用于", "description": "全双工用于 ISAC"}, {"source": "单静态传感", "target": "ISAC", "type": "模式", "description": "单静态是 ISAC 的一种模式"}, {"source": "双静态传感", "target": "ISAC", "type": "模式", "description": "双静态是 ISAC 的一种模式"}, {"source": "协作传感", "target": "ISAC", "type": "模式", "description": "协作是 ISAC 的一种模式"}, {"source": "闭环控制", "target": "ISAC", "type": "实现", "description": "ISAC 实现闭环控制"}])'>
+                    <div class="node-header">
+                        <span class="node-name">ISAC</span>
+                        <span class="node-importance">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">核心范式</div>
+                    <div class="node-definition">集成传感与通信，使用无线通信基础设施进行环境 sensing</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #ff6b6b;" onclick='showNodeDetail({"id": "E2", "name": "6G", "type": "网络代际", "layer": "概念层", "definition": "第六代移动通信网络，支持 sensing 等新功能", "importance": 5}, [{"source": "ISAC", "target": "6G", "type": "属于", "description": "ISAC 是 6G 的关键技术"}])'>
+                    <div class="node-header">
+                        <span class="node-name">6G</span>
+                        <span class="node-importance">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">网络代际</div>
+                    <div class="node-definition">第六代移动通信网络，支持 sensing 等新功能</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            </div></div>
+        <div class="layer-group" style="border-left-color: #4ecdc4;">
+            <div class="layer-header" onclick="toggleLayer(this)" style="cursor: pointer;">
+                <div class="layer-title" style="color: #4ecdc4;">📁 架构层 (5个实体)</div>
+                <div class="layer-toggle">▼ 点击展开/折叠</div>
+            </div>
+            <div class="layer-content">
+        
+                <div class="node-card" style="border-left-color: #4ecdc4;" onclick='showNodeDetail({"id": "E3", "name": "O-RAN", "type": "架构标准", "layer": "架构层", "definition": "开放无线接入网，提供智能、开放的 RAN 架构", "importance": 5}, [{"source": "ISAC", "target": "O-RAN", "type": "集成于", "description": "ISAC 需要集成到 O-RAN 架构"}, {"source": "O-DU", "target": "O-RAN", "type": "属于", "description": "O-DU 是 O-RAN 的组件"}, {"source": "O-RU", "target": "O-RAN", "type": "属于", "description": "O-RU 是 O-RAN 的组件"}, {"source": "Near-RT RIC", "target": "O-RAN", "type": "属于", "description": "Near-RT RIC 是 O-RAN 的组件"}])'>
+                    <div class="node-header">
+                        <span class="node-name">O-RAN</span>
+                        <span class="node-importance">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">架构标准</div>
+                    <div class="node-definition">开放无线接入网，提供智能、开放的 RAN 架构</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #4ecdc4;" onclick='showNodeDetail({"id": "E4", "name": "O-DU", "type": "网元", "layer": "架构层", "definition": "O-RAN 分布式单元，负责基带处理", "importance": 4}, [{"source": "O-DU", "target": "O-RAN", "type": "属于", "description": "O-DU 是 O-RAN 的组件"}, {"source": "dApps", "target": "O-DU", "type": "运行于", "description": "dApps 运行在 O-DU 上"}, {"source": "Open Fronthaul", "target": "O-DU", "type": "连接", "description": "Open Fronthaul 连接 O-DU"}])'>
+                    <div class="node-header">
+                        <span class="node-name">O-DU</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">网元</div>
+                    <div class="node-definition">O-RAN 分布式单元，负责基带处理</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #4ecdc4;" onclick='showNodeDetail({"id": "E5", "name": "O-RU", "type": "网元", "layer": "架构层", "definition": "O-RAN 射频单元，负责 RF 处理", "importance": 4}, [{"source": "O-RU", "target": "O-RAN", "type": "属于", "description": "O-RU 是 O-RAN 的组件"}, {"source": "Open Fronthaul", "target": "O-RU", "type": "连接", "description": "Open Fronthaul 连接 O-RU"}])'>
+                    <div class="node-header">
+                        <span class="node-name">O-RU</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">网元</div>
+                    <div class="node-definition">O-RAN 射频单元，负责 RF 处理</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #4ecdc4;" onclick='showNodeDetail({"id": "E6", "name": "Near-RT RIC", "type": "控制器", "layer": "架构层", "definition": "近实时 RAN 智能控制器，延迟<10ms", "importance": 4}, [{"source": "Near-RT RIC", "target": "O-RAN", "type": "属于", "description": "Near-RT RIC 是 O-RAN 的组件"}, {"source": "xApps", "target": "Near-RT RIC", "type": "运行于", "description": "xApps 运行在 Near-RT RIC 上"}])'>
+                    <div class="node-header">
+                        <span class="node-name">Near-RT RIC</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">控制器</div>
+                    <div class="node-definition">近实时 RAN 智能控制器，延迟<10ms</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #4ecdc4;" onclick='showNodeDetail({"id": "E7", "name": "Non-RT RIC", "type": "控制器", "layer": "架构层", "definition": "非实时 RAN 智能控制器，延迟>1s", "importance": 3}, [])'>
+                    <div class="node-header">
+                        <span class="node-name">Non-RT RIC</span>
+                        <span class="node-importance">⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">控制器</div>
+                    <div class="node-definition">非实时 RAN 智能控制器，延迟>1s</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            </div></div>
+        <div class="layer-group" style="border-left-color: #45b7d1;">
+            <div class="layer-header" onclick="toggleLayer(this)" style="cursor: pointer;">
+                <div class="layer-title" style="color: #45b7d1;">📁 应用层 (6个实体)</div>
+                <div class="layer-toggle">▼ 点击展开/折叠</div>
+            </div>
+            <div class="layer-content">
+        
+                <div class="node-card" style="border-left-color: #45b7d1;" onclick='showNodeDetail({"id": "E8", "name": "xApps", "type": "应用", "layer": "应用层", "definition": "运行在 Near-RT RIC 上的应用", "importance": 4}, [{"source": "xApps", "target": "Near-RT RIC", "type": "运行于", "description": "xApps 运行在 Near-RT RIC 上"}, {"source": "E2SM-SENS", "target": "xApps", "type": "服务于", "description": "E2SM-SENS 为 xApps 提供 sensing 数据"}])'>
+                    <div class="node-header">
+                        <span class="node-name">xApps</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">应用</div>
+                    <div class="node-definition">运行在 Near-RT RIC 上的应用</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #45b7d1;" onclick='showNodeDetail({"id": "E9", "name": "dApps", "type": "应用", "layer": "应用层", "definition": "运行在 O-DU 上的分布式应用，处理 sensing", "importance": 4}, [{"source": "dApps", "target": "O-DU", "type": "运行于", "description": "dApps 运行在 O-DU 上"}, {"source": "dApps", "target": "IQ 采样", "type": "处理", "description": "dApps 处理 IQ 采样数据"}])'>
+                    <div class="node-header">
+                        <span class="node-name">dApps</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">应用</div>
+                    <div class="node-definition">运行在 O-DU 上的分布式应用，处理 sensing</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #45b7d1;" onclick='showNodeDetail({"id": "E19", "name": "单静态传感", "type": "sensing 模式", "layer": "应用层", "definition": "发射和接收在同一位置的 sensing", "importance": 4}, [{"source": "单静态传感", "target": "ISAC", "type": "模式", "description": "单静态是 ISAC 的一种模式"}])'>
+                    <div class="node-header">
+                        <span class="node-name">单静态传感</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">sensing 模式</div>
+                    <div class="node-definition">发射和接收在同一位置的 sensing</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #45b7d1;" onclick='showNodeDetail({"id": "E20", "name": "双静态传感", "type": "sensing 模式", "layer": "应用层", "definition": "发射和接收在不同位置的 sensing", "importance": 3}, [{"source": "双静态传感", "target": "ISAC", "type": "模式", "description": "双静态是 ISAC 的一种模式"}])'>
+                    <div class="node-header">
+                        <span class="node-name">双静态传感</span>
+                        <span class="node-importance">⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">sensing 模式</div>
+                    <div class="node-definition">发射和接收在不同位置的 sensing</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #45b7d1;" onclick='showNodeDetail({"id": "E21", "name": "协作传感", "type": "sensing 模式", "layer": "应用层", "definition": "多个基站协作进行 sensing", "importance": 3}, [{"source": "协作传感", "target": "ISAC", "type": "模式", "description": "协作是 ISAC 的一种模式"}])'>
+                    <div class="node-header">
+                        <span class="node-name">协作传感</span>
+                        <span class="node-importance">⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">sensing 模式</div>
+                    <div class="node-definition">多个基站协作进行 sensing</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #45b7d1;" onclick='showNodeDetail({"id": "E23", "name": "闭环控制", "type": "控制模式", "layer": "应用层", "definition": "基于 sensing 反馈的实时控制", "importance": 4}, [{"source": "闭环控制", "target": "ISAC", "type": "实现", "description": "ISAC 实现闭环控制"}, {"source": "端到端延迟", "target": "闭环控制", "type": "衡量", "description": "端到端延迟衡量闭环控制性能"}])'>
+                    <div class="node-header">
+                        <span class="node-name">闭环控制</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">控制模式</div>
+                    <div class="node-definition">基于 sensing 反馈的实时控制</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            </div></div>
+        <div class="layer-group" style="border-left-color: #96ceb4;">
+            <div class="layer-header" onclick="toggleLayer(this)" style="cursor: pointer;">
+                <div class="layer-title" style="color: #96ceb4;">📁 接口层 (3个实体)</div>
+                <div class="layer-toggle">▼ 点击展开/折叠</div>
+            </div>
+            <div class="layer-content">
+        
+                <div class="node-card" style="border-left-color: #96ceb4;" onclick='showNodeDetail({"id": "E10", "name": "E2SM-SENS", "type": "服务模型", "layer": "接口层", "definition": "E2 服务模型 for SENSing，支持 sensing 遥测订阅", "importance": 5}, [{"source": "E2SM-SENS", "target": "xApps", "type": "服务于", "description": "E2SM-SENS 为 xApps 提供 sensing 数据"}, {"source": "E2SM-SENS", "target": "ISAC", "type": "支持", "description": "E2SM-SENS 支持 ISAC 功能"}, {"source": "E2SM-SENS", "target": "E2 接口", "type": "使用", "description": "E2SM-SENS 基于 E2 接口"}])'>
+                    <div class="node-header">
+                        <span class="node-name">E2SM-SENS</span>
+                        <span class="node-importance">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">服务模型</div>
+                    <div class="node-definition">E2 服务模型 for SENSing，支持 sensing 遥测订阅</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #96ceb4;" onclick='showNodeDetail({"id": "E11", "name": "E2 接口", "type": "接口", "layer": "接口层", "definition": "Near-RT RIC 与 O-CU/O-DU 之间的接口", "importance": 3}, [{"source": "E2SM-SENS", "target": "E2 接口", "type": "使用", "description": "E2SM-SENS 基于 E2 接口"}])'>
+                    <div class="node-header">
+                        <span class="node-name">E2 接口</span>
+                        <span class="node-importance">⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">接口</div>
+                    <div class="node-definition">Near-RT RIC 与 O-CU/O-DU 之间的接口</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #96ceb4;" onclick='showNodeDetail({"id": "E12", "name": "Open Fronthaul", "type": "接口", "layer": "接口层", "definition": "O-DU 与 O-RU 之间的开放前传接口", "importance": 4}, [{"source": "Open Fronthaul", "target": "O-DU", "type": "连接", "description": "Open Fronthaul 连接 O-DU"}, {"source": "Open Fronthaul", "target": "O-RU", "type": "连接", "description": "Open Fronthaul 连接 O-RU"}])'>
+                    <div class="node-header">
+                        <span class="node-name">Open Fronthaul</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">接口</div>
+                    <div class="node-definition">O-DU 与 O-RU 之间的开放前传接口</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            </div></div>
+        <div class="layer-group" style="border-left-color: #ffeaa7;">
+            <div class="layer-header" onclick="toggleLayer(this)" style="cursor: pointer;">
+                <div class="layer-title" style="color: #ffeaa7;">📁 物理层 (3个实体)</div>
+                <div class="layer-toggle">▼ 点击展开/折叠</div>
+            </div>
+            <div class="layer-content">
+        
+                <div class="node-card" style="border-left-color: #ffeaa7;" onclick='showNodeDetail({"id": "E13", "name": "IQ 采样", "type": "信号处理", "layer": "物理层", "definition": "同相/正交采样，用于提取 sensing 特征", "importance": 4}, [{"source": "dApps", "target": "IQ 采样", "type": "处理", "description": "dApps 处理 IQ 采样数据"}, {"source": "IQ 采样", "target": "延迟特征", "type": "提取", "description": "从 IQ 采样提取延迟特征"}, {"source": "IQ 采样", "target": "多普勒特征", "type": "提取", "description": "从 IQ 采样提取多普勒特征"}, {"source": "IQ 采样", "target": "角度特征", "type": "提取", "description": "从 IQ 采样提取角度特征"}])'>
+                    <div class="node-header">
+                        <span class="node-name">IQ 采样</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">信号处理</div>
+                    <div class="node-definition">同相/正交采样，用于提取 sensing 特征</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #ffeaa7;" onclick='showNodeDetail({"id": "E14", "name": "波束成形", "type": "天线技术", "layer": "物理层", "definition": "使用天线阵列定向发射/接收", "importance": 4}, [{"source": "波束成形", "target": "ISAC", "type": "用于", "description": "波束成形用于 ISAC"}])'>
+                    <div class="node-header">
+                        <span class="node-name">波束成形</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">天线技术</div>
+                    <div class="node-definition">使用天线阵列定向发射/接收</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #ffeaa7;" onclick='showNodeDetail({"id": "E15", "name": "全双工", "type": "通信技术", "layer": "物理层", "definition": "同时同频进行发射和接收", "importance": 4}, [{"source": "全双工", "target": "ISAC", "type": "用于", "description": "全双工用于 ISAC"}])'>
+                    <div class="node-header">
+                        <span class="node-name">全双工</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">通信技术</div>
+                    <div class="node-definition">同时同频进行发射和接收</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            </div></div>
+        <div class="layer-group" style="border-left-color: #dfe6e9;">
+            <div class="layer-header" onclick="toggleLayer(this)" style="cursor: pointer;">
+                <div class="layer-title" style="color: #dfe6e9;">📁 特征层 (3个实体)</div>
+                <div class="layer-toggle">▼ 点击展开/折叠</div>
+            </div>
+            <div class="layer-content">
+        
+                <div class="node-card" style="border-left-color: #dfe6e9;" onclick='showNodeDetail({"id": "E16", "name": "延迟特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标距离信息", "importance": 3}, [{"source": "IQ 采样", "target": "延迟特征", "type": "提取", "description": "从 IQ 采样提取延迟特征"}])'>
+                    <div class="node-header">
+                        <span class="node-name">延迟特征</span>
+                        <span class="node-importance">⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">sensing 特征</div>
+                    <div class="node-definition">从 IQ 采样提取的目标距离信息</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #dfe6e9;" onclick='showNodeDetail({"id": "E17", "name": "多普勒特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标速度信息", "importance": 3}, [{"source": "IQ 采样", "target": "多普勒特征", "type": "提取", "description": "从 IQ 采样提取多普勒特征"}])'>
+                    <div class="node-header">
+                        <span class="node-name">多普勒特征</span>
+                        <span class="node-importance">⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">sensing 特征</div>
+                    <div class="node-definition">从 IQ 采样提取的目标速度信息</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            
+                <div class="node-card" style="border-left-color: #dfe6e9;" onclick='showNodeDetail({"id": "E18", "name": "角度特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标方向信息", "importance": 3}, [{"source": "IQ 采样", "target": "角度特征", "type": "提取", "description": "从 IQ 采样提取角度特征"}])'>
+                    <div class="node-header">
+                        <span class="node-name">角度特征</span>
+                        <span class="node-importance">⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">sensing 特征</div>
+                    <div class="node-definition">从 IQ 采样提取的目标方向信息</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            </div></div>
+        <div class="layer-group" style="border-left-color: #a29bfe;">
+            <div class="layer-header" onclick="toggleLayer(this)" style="cursor: pointer;">
+                <div class="layer-title" style="color: #a29bfe;">📁 性能层 (1个实体)</div>
+                <div class="layer-toggle">▼ 点击展开/折叠</div>
+            </div>
+            <div class="layer-content">
+        
+                <div class="node-card" style="border-left-color: #a29bfe;" onclick='showNodeDetail({"id": "E22", "name": "端到端延迟", "type": "性能指标", "layer": "性能层", "definition": "sensing 闭环控制的总延迟", "importance": 4}, [{"source": "端到端延迟", "target": "闭环控制", "type": "衡量", "description": "端到端延迟衡量闭环控制性能"}])'>
+                    <div class="node-header">
+                        <span class="node-name">端到端延迟</span>
+                        <span class="node-importance">⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="node-type-badge">性能指标</div>
+                    <div class="node-definition">sensing 闭环控制的总延迟</div>
+                    <div class="node-more">📖 点击查看详情</div>
+                </div>
+            </div></div>
+            </div>
+            
+            <div class="relations-section">
+                <h2 class="section-title">🔗 关系网络 (23条，点击高亮)</h2>
+                
+        <div class="relation-item" onclick="highlightRelation('ISAC', '6G')">
+            <span class="relation-source">ISAC</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">属于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">6G</span>
+            <span class="relation-desc">(ISAC 是 6G 的关键技术)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('ISAC', 'O-RAN')">
+            <span class="relation-source">ISAC</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">集成于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RAN</span>
+            <span class="relation-desc">(ISAC 需要集成到 O-RAN 架构)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('O-DU', 'O-RAN')">
+            <span class="relation-source">O-DU</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">属于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RAN</span>
+            <span class="relation-desc">(O-DU 是 O-RAN 的组件)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('O-RU', 'O-RAN')">
+            <span class="relation-source">O-RU</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">属于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RAN</span>
+            <span class="relation-desc">(O-RU 是 O-RAN 的组件)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('Near-RT RIC', 'O-RAN')">
+            <span class="relation-source">Near-RT RIC</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">属于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RAN</span>
+            <span class="relation-desc">(Near-RT RIC 是 O-RAN 的组件)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('xApps', 'Near-RT RIC')">
+            <span class="relation-source">xApps</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">运行于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">Near-RT RIC</span>
+            <span class="relation-desc">(xApps 运行在 Near-RT RIC 上)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('dApps', 'O-DU')">
+            <span class="relation-source">dApps</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">运行于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-DU</span>
+            <span class="relation-desc">(dApps 运行在 O-DU 上)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('E2SM-SENS', 'xApps')">
+            <span class="relation-source">E2SM-SENS</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">服务于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">xApps</span>
+            <span class="relation-desc">(E2SM-SENS 为 xApps 提供 sensing 数据)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('E2SM-SENS', 'ISAC')">
+            <span class="relation-source">E2SM-SENS</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">支持</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+            <span class="relation-desc">(E2SM-SENS 支持 ISAC 功能)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('E2SM-SENS', 'E2 接口')">
+            <span class="relation-source">E2SM-SENS</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">使用</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">E2 接口</span>
+            <span class="relation-desc">(E2SM-SENS 基于 E2 接口)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('Open Fronthaul', 'O-DU')">
+            <span class="relation-source">Open Fronthaul</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">连接</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-DU</span>
+            <span class="relation-desc">(Open Fronthaul 连接 O-DU)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('Open Fronthaul', 'O-RU')">
+            <span class="relation-source">Open Fronthaul</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">连接</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RU</span>
+            <span class="relation-desc">(Open Fronthaul 连接 O-RU)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('dApps', 'IQ 采样')">
+            <span class="relation-source">dApps</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">处理</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">IQ 采样</span>
+            <span class="relation-desc">(dApps 处理 IQ 采样数据)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('IQ 采样', '延迟特征')">
+            <span class="relation-source">IQ 采样</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">提取</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">延迟特征</span>
+            <span class="relation-desc">(从 IQ 采样提取延迟特征)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('IQ 采样', '多普勒特征')">
+            <span class="relation-source">IQ 采样</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">提取</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">多普勒特征</span>
+            <span class="relation-desc">(从 IQ 采样提取多普勒特征)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('IQ 采样', '角度特征')">
+            <span class="relation-source">IQ 采样</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">提取</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">角度特征</span>
+            <span class="relation-desc">(从 IQ 采样提取角度特征)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('波束成形', 'ISAC')">
+            <span class="relation-source">波束成形</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">用于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+            <span class="relation-desc">(波束成形用于 ISAC)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('全双工', 'ISAC')">
+            <span class="relation-source">全双工</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">用于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+            <span class="relation-desc">(全双工用于 ISAC)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('单静态传感', 'ISAC')">
+            <span class="relation-source">单静态传感</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">模式</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+            <span class="relation-desc">(单静态是 ISAC 的一种模式)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('双静态传感', 'ISAC')">
+            <span class="relation-source">双静态传感</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">模式</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+            <span class="relation-desc">(双静态是 ISAC 的一种模式)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('协作传感', 'ISAC')">
+            <span class="relation-source">协作传感</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">模式</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+            <span class="relation-desc">(协作是 ISAC 的一种模式)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('闭环控制', 'ISAC')">
+            <span class="relation-source">闭环控制</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">实现</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+            <span class="relation-desc">(ISAC 实现闭环控制)</span>
+        </div>
+        
+        <div class="relation-item" onclick="highlightRelation('端到端延迟', '闭环控制')">
+            <span class="relation-source">端到端延迟</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">衡量</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">闭环控制</span>
+            <span class="relation-desc">(端到端延迟衡量闭环控制性能)</span>
+        </div>
+        
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详情弹窗 -->
+    <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">详情</h2>
+                <div class="modal-subtitle" id="modal-subtitle"></div>
+                <button class="modal-close" onclick="closeModalBtn()">×</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+    
+    <div class="toc">
+        <h4>📑 快速导航</h4>
+        <ul>
+            <li><a href="#" onclick="scrollToSection('研究问题')">🎯 研究问题</a></li>
+            <li><a href="#" onclick="scrollToSection('核心贡献')">💡 核心贡献</a></li>
+            <li><a href="#" onclick="scrollToSection('架构层次')">🏗️ 架构层次</a></li>
+            <li><a href="#" onclick="scrollToSection('关键技术')">🔬 关键技术</a></li>
+            <li><a href="#" onclick="scrollToSection('验证方法')">📊 验证方法</a></li>
+            <li><a href="#" onclick="scrollToSection('未来方向')">🔮 未来方向</a></li>
+            <li><a href="#" onclick="scrollToSection('概念地图')">🧠 概念地图</a></li>
+            <li><a href="#" onclick="scrollToSection('关系网络')">🔗 关系网络</a></li>
+        </ul>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script>
+        const nodes = [{"id": "E1", "name": "ISAC", "type": "核心范式", "layer": "概念层", "definition": "集成传感与通信，使用无线通信基础设施进行环境 sensing", "importance": 5}, {"id": "E2", "name": "6G", "type": "网络代际", "layer": "概念层", "definition": "第六代移动通信网络，支持 sensing 等新功能", "importance": 5}, {"id": "E3", "name": "O-RAN", "type": "架构标准", "layer": "架构层", "definition": "开放无线接入网，提供智能、开放的 RAN 架构", "importance": 5}, {"id": "E4", "name": "O-DU", "type": "网元", "layer": "架构层", "definition": "O-RAN 分布式单元，负责基带处理", "importance": 4}, {"id": "E5", "name": "O-RU", "type": "网元", "layer": "架构层", "definition": "O-RAN 射频单元，负责 RF 处理", "importance": 4}, {"id": "E6", "name": "Near-RT RIC", "type": "控制器", "layer": "架构层", "definition": "近实时 RAN 智能控制器，延迟<10ms", "importance": 4}, {"id": "E7", "name": "Non-RT RIC", "type": "控制器", "layer": "架构层", "definition": "非实时 RAN 智能控制器，延迟>1s", "importance": 3}, {"id": "E8", "name": "xApps", "type": "应用", "layer": "应用层", "definition": "运行在 Near-RT RIC 上的应用", "importance": 4}, {"id": "E9", "name": "dApps", "type": "应用", "layer": "应用层", "definition": "运行在 O-DU 上的分布式应用，处理 sensing", "importance": 4}, {"id": "E10", "name": "E2SM-SENS", "type": "服务模型", "layer": "接口层", "definition": "E2 服务模型 for SENSing，支持 sensing 遥测订阅", "importance": 5}, {"id": "E11", "name": "E2 接口", "type": "接口", "layer": "接口层", "definition": "Near-RT RIC 与 O-CU/O-DU 之间的接口", "importance": 3}, {"id": "E12", "name": "Open Fronthaul", "type": "接口", "layer": "接口层", "definition": "O-DU 与 O-RU 之间的开放前传接口", "importance": 4}, {"id": "E13", "name": "IQ 采样", "type": "信号处理", "layer": "物理层", "definition": "同相/正交采样，用于提取 sensing 特征", "importance": 4}, {"id": "E14", "name": "波束成形", "type": "天线技术", "layer": "物理层", "definition": "使用天线阵列定向发射/接收", "importance": 4}, {"id": "E15", "name": "全双工", "type": "通信技术", "layer": "物理层", "definition": "同时同频进行发射和接收", "importance": 4}, {"id": "E16", "name": "延迟特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标距离信息", "importance": 3}, {"id": "E17", "name": "多普勒特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标速度信息", "importance": 3}, {"id": "E18", "name": "角度特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标方向信息", "importance": 3}, {"id": "E19", "name": "单静态传感", "type": "sensing 模式", "layer": "应用层", "definition": "发射和接收在同一位置的 sensing", "importance": 4}, {"id": "E20", "name": "双静态传感", "type": "sensing 模式", "layer": "应用层", "definition": "发射和接收在不同位置的 sensing", "importance": 3}, {"id": "E21", "name": "协作传感", "type": "sensing 模式", "layer": "应用层", "definition": "多个基站协作进行 sensing", "importance": 3}, {"id": "E22", "name": "端到端延迟", "type": "性能指标", "layer": "性能层", "definition": "sensing 闭环控制的总延迟", "importance": 4}, {"id": "E23", "name": "闭环控制", "type": "控制模式", "layer": "应用层", "definition": "基于 sensing 反馈的实时控制", "importance": 4}];
+        const edges = [{"source": "ISAC", "target": "6G", "type": "属于", "description": "ISAC 是 6G 的关键技术"}, {"source": "ISAC", "target": "O-RAN", "type": "集成于", "description": "ISAC 需要集成到 O-RAN 架构"}, {"source": "O-DU", "target": "O-RAN", "type": "属于", "description": "O-DU 是 O-RAN 的组件"}, {"source": "O-RU", "target": "O-RAN", "type": "属于", "description": "O-RU 是 O-RAN 的组件"}, {"source": "Near-RT RIC", "target": "O-RAN", "type": "属于", "description": "Near-RT RIC 是 O-RAN 的组件"}, {"source": "xApps", "target": "Near-RT RIC", "type": "运行于", "description": "xApps 运行在 Near-RT RIC 上"}, {"source": "dApps", "target": "O-DU", "type": "运行于", "description": "dApps 运行在 O-DU 上"}, {"source": "E2SM-SENS", "target": "xApps", "type": "服务于", "description": "E2SM-SENS 为 xApps 提供 sensing 数据"}, {"source": "E2SM-SENS", "target": "ISAC", "type": "支持", "description": "E2SM-SENS 支持 ISAC 功能"}, {"source": "E2SM-SENS", "target": "E2 接口", "type": "使用", "description": "E2SM-SENS 基于 E2 接口"}, {"source": "Open Fronthaul", "target": "O-DU", "type": "连接", "description": "Open Fronthaul 连接 O-DU"}, {"source": "Open Fronthaul", "target": "O-RU", "type": "连接", "description": "Open Fronthaul 连接 O-RU"}, {"source": "dApps", "target": "IQ 采样", "type": "处理", "description": "dApps 处理 IQ 采样数据"}, {"source": "IQ 采样", "target": "延迟特征", "type": "提取", "description": "从 IQ 采样提取延迟特征"}, {"source": "IQ 采样", "target": "多普勒特征", "type": "提取", "description": "从 IQ 采样提取多普勒特征"}, {"source": "IQ 采样", "target": "角度特征", "type": "提取", "description": "从 IQ 采样提取角度特征"}, {"source": "波束成形", "target": "ISAC", "type": "用于", "description": "波束成形用于 ISAC"}, {"source": "全双工", "target": "ISAC", "type": "用于", "description": "全双工用于 ISAC"}, {"source": "单静态传感", "target": "ISAC", "type": "模式", "description": "单静态是 ISAC 的一种模式"}, {"source": "双静态传感", "target": "ISAC", "type": "模式", "description": "双静态是 ISAC 的一种模式"}, {"source": "协作传感", "target": "ISAC", "type": "模式", "description": "协作是 ISAC 的一种模式"}, {"source": "闭环控制", "target": "ISAC", "type": "实现", "description": "ISAC 实现闭环控制"}, {"source": "端到端延迟", "target": "闭环控制", "type": "衡量", "description": "端到端延迟衡量闭环控制性能"}];
+        
+        let scene, camera, renderer, nodeMeshes = [], edgeLines = [], animationId, isAnimating = true;
+        const layerColors = {'概念层': 0xff6b6b, '架构层': 0x4ecdc4, '应用层': 0x45b7d1, '接口层': 0x96ceb4, '物理层': 0xffeaa7, '特征层': 0xdfe6e9, '性能层': 0xa29bfe};
+        const importanceSize = {5: 2.5, 4: 2.0, 3: 1.5};
+        
+        function switchMode(mode) {
+            document.getElementById('view-3d').style.display = mode === '3d' ? 'block' : 'none';
+            document.getElementById('view-2d').style.display = mode === '2d' ? 'block' : 'none';
+            document.querySelectorAll('.mode-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', (mode === '3d' && i === 0) || (mode === '2d' && i === 1));
+            });
+        }
+        
+        function init3D() {
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0a1a);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000); camera.position.z = 60;
+            renderer = new THREE.WebGLRenderer({canvas: document.getElementById('canvas'), antialias: true, alpha: true});
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const pointLight = new THREE.PointLight(0x00d4ff, 1.2, 100); pointLight.position.set(0, 0, 30); scene.add(pointLight);
+            nodes.forEach((node, i) => {
+                const geometry = new THREE.SphereGeometry(importanceSize[node.importance] || 1.5, 32, 32);
+                const color = layerColors[node.layer] || 0xffffff;
+                const material = new THREE.MeshPhongMaterial({color: color, emissive: color, emissiveIntensity: 0.6, transparent: true, opacity: 0.95});
+                const sphere = new THREE.Mesh(geometry, material);
+                const phi = Math.acos(-1 + (2 * i) / nodes.length);
+                const theta = Math.sqrt(nodes.length * Math.PI) * phi;
+                sphere.position.set(40 * Math.cos(theta) * Math.sin(phi), 40 * Math.sin(theta) * Math.sin(phi), 40 * Math.cos(phi));
+                sphere.userData = node; scene.add(sphere); nodeMeshes.push(sphere);
+                const glow = new THREE.Mesh(new THREE.SphereGeometry(importanceSize[node.importance] * 1.8, 32, 32), new THREE.MeshBasicMaterial({color: color, transparent: true, opacity: 0.25, side: THREE.BackSide}));
+                sphere.add(glow);
+            });
+            edges.forEach(edge => {
+                const src = nodeMeshes.find(n => n.userData.name === edge.source);
+                const tgt = nodeMeshes.find(n => n.userData.name === edge.target);
+                if (src && tgt) {
+                    const geometry = new THREE.BufferGeometry().setFromPoints([src.position, tgt.position]);
+                    const material = new THREE.LineBasicMaterial({color: 0x00d4ff, transparent: true, opacity: 0.4});
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line); edgeLines.push(line);
+                }
+            });
+            const particles = createParticles(3000); scene.add(particles);
+            gsap.to(particles.rotation, {y: Math.PI*2, duration: 90, repeat: -1, ease: "linear"});
+            setupInteraction();
+            setTimeout(() => { document.getElementById('loading').style.opacity = '0'; setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1000); }, 1000);
+            animate();
+        }
+        
+        function createParticles(count) {
+            const vertices = [];
+            for (let i = 0; i < count; i++) vertices.push((Math.random()-0.5)*300, (Math.random()-0.5)*300, (Math.random()-0.5)*300);
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            return new THREE.Points(geometry, new THREE.PointsMaterial({color: 0x00d4ff, size: 0.6, transparent: true, opacity: 0.6}));
+        }
+        
+        function setupInteraction() {
+            const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+            document.addEventListener('mousemove', (e) => {
+                mouse.set((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(nodeMeshes);
+                if (intersects.length > 0) { document.body.style.cursor = 'pointer'; showInfo(intersects[0].object.userData); } else { document.body.style.cursor = 'default'; closeInfo(); }
+            });
+            document.addEventListener('wheel', (e) => { camera.position.z = Math.max(30, Math.min(120, camera.position.z + e.deltaY*0.08)); });
+            let dragging = false, prev = {x:0, y:0};
+            document.addEventListener('mousedown', () => dragging = true);
+            document.addEventListener('mouseup', () => dragging = false);
+            document.addEventListener('mousemove', (e) => {
+                if (dragging) { scene.rotation.y += (e.offsetX - prev.x) * 0.008; scene.rotation.x += (e.offsetY - prev.y) * 0.008; }
+                prev = {x: e.offsetX, y: e.offsetY};
+            });
+        }
+        
+        function showInfo(node) {
+            const panel = document.getElementById('info-panel');
+            document.getElementById('info-title').textContent = node.name;
+            document.getElementById('info-content').innerHTML = `
+                <div class="info-row"><div class="info-label">类型 TYPE</div><div class="info-value">${node.type}</div></div>
+                <div class="info-row"><div class="info-label">层级 LAYER</div><div class="info-value">${node.layer}</div></div>
+                <div class="info-row"><div class="info-label">定义 DEFINITION</div><div class="info-value">${node.definition}</div></div>
+                <div class="info-row"><div class="info-label">重要度 IMPORTANCE</div><div class="info-value">${'⭐'.repeat(node.importance)}</div></div>
+            `;
+            panel.style.display = 'block';
+        }
+        
+        function closeInfo() { document.getElementById('info-panel').style.display = 'none'; }
+        
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            if (isAnimating) {
+                scene.rotation.y += 0.0015;
+                nodeMeshes.forEach((node, i) => { const s = 1 + Math.sin(Date.now()*0.0015 + i)*0.12; node.scale.set(s, s, s); });
+            }
+            renderer.render(scene, camera);
+        }
+        
+        function resetView() { gsap.to(camera.position, {z: 60, duration: 1.5}); gsap.to(scene.rotation, {x: 0, y: 0, duration: 1.5}); }
+        function toggleAnimation() { isAnimating = !isAnimating; }
+        function exportImage() { const a = document.createElement('a'); a.href = renderer.domElement.toDataURL('image/png', 1.0); a.download = 'ISAC_knowledge_graph_v3.png'; a.click(); }
+        
+        // 2D 功能
+        function toggleLayer(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.layer-toggle');
+            content.classList.toggle('collapsed');
+            toggle.textContent = content.classList.contains('collapsed') ? '▼ 点击展开' : '▲ 点击折叠';
+        }
+        
+        function scrollToSection(title) {
+            const sections = document.querySelectorAll('.summary-section, .concept-map, .relations-section');
+            sections.forEach(sec => {
+                if (sec.querySelector('.section-title')?.textContent.includes(title)) {
+                    sec.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            });
+        }
+        
+        function showNodeDetail(node, relations) {
+            document.getElementById('modal-title').textContent = node.name;
+            document.getElementById('modal-subtitle').textContent = `${node.type} | ${node.layer} | ${'⭐'.repeat(node.importance)}`;
+            let relationsHtml = '';
+            if (relations && relations.length > 0) {
+                relationsHtml = `<div class="modal-section"><div class="modal-label">🔗 相关关系 RELATED RELATIONS</div><div class="modal-list">`;
+                relations.forEach(r => {
+                    relationsHtml += `<div class="modal-list-item"><div>${r.source} → <b>${r.type}</b> → ${r.target}</div><div style="color:#aaa;font-size:0.9em;margin-top:5px;">${r.description}</div></div>`;
+                });
+                relationsHtml += '</div></div>';
+            }
+            document.getElementById('modal-body').innerHTML = `
+                <div class="modal-section"><div class="modal-label">📋 定义 DEFINITION</div><div class="modal-value">${node.definition}</div></div>
+                ${relationsHtml}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function showChallengeDetail(challenge) {
+            document.getElementById('modal-title').textContent = challenge.name;
+            document.getElementById('modal-subtitle').textContent = '研究挑战 RESEARCH CHALLENGE';
+            document.getElementById('modal-body').innerHTML = `
+                <div class="modal-section"><div class="modal-label">📋 详细描述</div><div class="modal-value">${challenge.detail}</div></div>
+                <div class="modal-section"><div class="modal-label">💡 影响</div><div class="modal-value">这个挑战阻碍了 ISAC 在 O-RAN 架构中的集成，需要创新的解决方案来克服。</div></div>
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function showContributionDetail(contrib) {
+            document.getElementById('modal-title').textContent = contrib.name;
+            document.getElementById('modal-subtitle').textContent = `${contrib.layer} | 核心贡献`;
+            let featuresHtml = '';
+            if (contrib.features && contrib.features.length > 0) {
+                featuresHtml = `<div class="modal-section"><div class="modal-label">✨ 主要功能</div><div class="modal-list">`;
+                contrib.features.forEach(f => {
+                    featuresHtml += `<div class="modal-list-item">${f}</div>`;
+                });
+                featuresHtml += '</div></div>';
+            }
+            document.getElementById('modal-body').innerHTML = `
+                <div class="modal-section"><div class="modal-label">📋 描述</div><div class="modal-value">${contrib.description}</div></div>
+                ${featuresHtml}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function showArchitectureDetail(layer) {
+            document.getElementById('modal-title').textContent = layer.name;
+            document.getElementById('modal-subtitle').textContent = '架构层次';
+            let componentsHtml = '';
+            if (layer.components && layer.components.length > 0) {
+                componentsHtml = `<div class="modal-section"><div class="modal-label">🧩 组件</div><div class="modal-list">`;
+                layer.components.forEach(c => {
+                    componentsHtml += `<div class="modal-list-item">${c}</div>`;
+                });
+                componentsHtml += '</div></div>';
+            }
+            document.getElementById('modal-body').innerHTML = `
+                <div class="modal-section"><div class="modal-label">📋 功能</div><div class="modal-value">${layer.function}</div></div>
+                ${componentsHtml}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function showTechnologyDetail(tech) {
+            document.getElementById('modal-title').textContent = `${tech.name} ${tech.get('chinese', '')}`;
+            document.getElementById('modal-subtitle').textContent = '关键技术';
+            let benefitsHtml = '';
+            const benefits = tech.benefits || tech.role_in_isac || tech.advantage || '';
+            if (benefits) {
+                benefitsHtml = `<div class="modal-section"><div class="modal-label">✨ ${tech.benefits ? '优势' : (tech.role_in_isac ? '作用' : '优势')}</div><div class="modal-value">${Array.isArray(benefits) ? benefits.join('<br>') : benefits}</div></div>`;
+            }
+            document.getElementById('modal-body').innerHTML = `
+                <div class="modal-section"><div class="modal-label">📋 描述</div><div class="modal-value">${tech.description}</div></div>
+                ${benefitsHtml}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function showValidationDetail(validation, metric) {
+            if (metric) {
+                document.getElementById('modal-title').textContent = metric.name;
+                document.getElementById('modal-subtitle').textContent = '性能指标';
+                document.getElementById('modal-body').innerHTML = `
+                    <div class="modal-section"><div class="modal-label">📊 结果</div><div class="modal-value">${metric.result}</div></div>
+                    ${metric.target ? `<div class="modal-section"><div class="modal-label">🎯 目标</div><div class="modal-value">${metric.target}</div></div>` : ''}
+                `;
+            } else {
+                document.getElementById('modal-title').textContent = '验证方法';
+                document.getElementById('modal-subtitle').textContent = validation.method;
+                let techHtml = '';
+                if (validation.technologies_used && validation.technologies_used.length > 0) {
+                    techHtml = `<div class="modal-section"><div class="modal-label">🔧 使用技术</div><div class="modal-list">`;
+                    validation.technologies_used.forEach(t => { techHtml += `<div class="modal-list-item">${t}</div>`; });
+                    techHtml += '</div></div>';
+                }
+                let metricsHtml = '';
+                if (validation.metrics && validation.metrics.length > 0) {
+                    metricsHtml = `<div class="modal-section"><div class="modal-label">📊 性能指标</div><div class="modal-list">`;
+                    validation.metrics.forEach(m => {
+                        metricsHtml += `<div class="modal-list-item"><div><b>${m.name}</b></div><div style="color:#aaa;font-size:0.9em;margin-top:5px;">${m.result}${m.target ? ' (目标：'+m.target+')' : ''}</div></div>`;
+                    });
+                    metricsHtml += '</div></div>';
+                }
+                document.getElementById('modal-body').innerHTML = `
+                    <div class="modal-section"><div class="modal-label">📋 方法</div><div class="modal-value">${validation.method}</div></div>
+                    ${techHtml}
+                    ${metricsHtml}
+                `;
+            }
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function showFutureDetail(future) {
+            document.getElementById('modal-title').textContent = `${future.name} ${future.get('chinese', '')}`;
+            document.getElementById('modal-subtitle').textContent = '未来研究方向';
+            document.getElementById('modal-body').innerHTML = `
+                <div class="modal-section"><div class="modal-label">📋 描述</div><div class="modal-value">${future.description}</div></div>
+                <div class="modal-section"><div class="modal-label">🔮 意义</div><div class="modal-value">这个方向将扩展当前工作的适用范围，为更复杂的 sensing 场景提供支持。</div></div>
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal(e) { if (e.target.id === 'modal') document.getElementById('modal').classList.remove('active'); }
+        function closeModalBtn() { document.getElementById('modal').classList.remove('active'); }
+        
+        function highlightRelation(source, target) {
+            switchMode('3d');
+            setTimeout(() => {
+                const srcNode = nodeMeshes.find(n => n.userData.name === source);
+                const tgtNode = nodeMeshes.find(n => n.userData.name === target);
+                if (srcNode && tgtNode) {
+                    gsap.to(camera.position, {x: (srcNode.position.x + tgtNode.position.x) / 2, y: (srcNode.position.y + tgtNode.position.y) / 2, z: 80, duration: 2});
+                }
+            }, 500);
+        }
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        init3D();
+    </script>
+</body>
+</html>

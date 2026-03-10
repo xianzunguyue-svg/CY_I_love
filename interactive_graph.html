@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>概念图谱 - 交互式可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .controls button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #0066cc;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0055aa;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .graph-container {
+            padding: 30px;
+            min-height: 600px;
+            position: relative;
+        }
+        
+        .mermaid {
+            text-align: center;
+        }
+        
+        .legend {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .legend h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .legend-item.theory {
+            background: #e1f5ff;
+            border: 2px solid #0066cc;
+            color: #0066cc;
+        }
+        
+        .legend-item.method {
+            background: #fff4e1;
+            border: 2px solid #cc6600;
+            color: #cc6600;
+        }
+        
+        .legend-item.person {
+            background: #f0e1ff;
+            border: 2px solid #6600cc;
+            color: #6600cc;
+        }
+        
+        .legend-item.event {
+            background: #ffe1e1;
+            border: 2px solid #cc0000;
+            color: #cc0000;
+        }
+        
+        .legend-item.org {
+            background: #e1ffe1;
+            border: 2px solid #00cc00;
+            color: #00cc00;
+        }
+        
+        .legend-item.other {
+            background: #f5f5f5;
+            border: 2px solid #666666;
+            color: #666666;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0066cc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 概念图谱可视化</h1>
+            <p>Concept Graph Visualization</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn-primary" onclick="zoomIn()">🔍 放大</button>
+            <button class="btn-primary" onclick="zoomOut()">🔎 缩小</button>
+            <button class="btn-secondary" onclick="resetZoom()">🔄 重置</button>
+            <button class="btn-secondary" onclick="toggleLabels()">🏷️ 切换标签</button>
+            <button class="btn-secondary" onclick="exportSVG()">💾 导出 SVG</button>
+        </div>
+        
+        <div class="graph-container">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>正在渲染图谱...</p>
+            </div>
+            
+            <div class="mermaid" id="graph">
+graph TD
+    %% 概念节点
+    A["知识图谱<br/><small>图形化知识结构技术</small>"]:::method
+    B["本体论<br/><small>研究存在本质的哲学分支</small>"]:::theory
+    C["语义网络<br/><small>节点和边表示概念关系</small>"]:::theory
+    D["深度学习<br/><small>多层神经网络学习</small>"]:::method
+    E["机器学习<br/><small>从数据中学习改进</small>"]:::method
+    F["人工智能<br/><small>模拟人类智能</small>"]:::method
+    G["推荐系统<br/><small>自动推荐相关内容</small>"]:::method
+    H["知识推理<br/><small>基于知识推导结论</small>"]:::method
+    
+    %% 关系连线
+    A -->|"参考：理论基础"| B
+    A -.->|"继承：发展自"| C
+    D ---|"相关"| E
+    E ---|"属于"| F
+    A ===|"应用于"| G
+    A ---|"核心技术"| H
+    D ---|"方法"| A
+    E ---|"方法"| A
+    
+    %% 样式定义
+    classDef theory fill:#e1f5ff,stroke:#0066cc,stroke-width:3px;
+    classDef method fill:#fff4e1,stroke:#cc6600,stroke-width:3px;
+    classDef person fill:#f0e1ff,stroke:#6600cc,stroke-width:3px;
+    classDef event fill:#ffe1e1,stroke:#cc0000,stroke-width:3px;
+    classDef org fill:#e1ffe1,stroke:#00cc00,stroke-width:3px;
+    classDef other fill:#f5f5f5,stroke:#666666,stroke-width:3px;
+            </div>
+        </div>
+        
+        <div class="legend">
+            <h3>📊 图例说明</h3>
+            <div class="legend-items">
+                <div class="legend-item theory">📘 理论</div>
+                <div class="legend-item method">📙 方法</div>
+                <div class="legend-item person">👤 人物</div>
+                <div class="legend-item event">📅 事件</div>
+                <div class="legend-item org">🏢 组织</div>
+                <div class="legend-item other">📄 其他</div>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">8</div>
+                <div class="stat-label">概念总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">2</div>
+                <div class="stat-label">理论概念</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">6</div>
+                <div class="stat-label">方法概念</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">9</div>
+                <div class="stat-label">关系数量</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 初始化 Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+        
+        // 隐藏加载动画
+        document.getElementById('graph').addEventListener('load', function() {
+            document.getElementById('loading').style.display = 'none';
+        });
+        
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+        }, 2000);
+        
+        // 缩放功能
+        let currentScale = 1;
+        
+        function zoomIn() {
+            currentScale *= 1.2;
+            document.getElementById('graph').style.transform = `scale(${currentScale})`;
+        }
+        
+        function zoomOut() {
+            currentScale /= 1.2;
+            document.getElementById('graph').style.transform = `scale(${currentScale})`;
+        }
+        
+        function resetZoom() {
+            currentScale = 1;
+            document.getElementById('graph').style.transform = 'scale(1)';
+        }
+        
+        // 切换标签
+        let labelsVisible = true;
+        function toggleLabels() {
+            labelsVisible = !labelsVisible;
+            const smalls = document.querySelectorAll('small');
+            smalls.forEach(el => {
+                el.style.display = labelsVisible ? 'inline' : 'none';
+            });
+        }
+        
+        // 导出 SVG
+        function exportSVG() {
+            const svg = document.querySelector('.mermaid svg');
+            if (!svg) {
+                alert('图谱尚未渲染完成');
+                return;
+            }
+            
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'concept_graph.svg';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // 点击节点显示详情
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.node')) {
+                const node = e.target.closest('.node');
+                const text = node.querySelector('text').textContent;
+                alert('概念：' + text);
+            }
+        });
+    </script>
+</body>
+</html>

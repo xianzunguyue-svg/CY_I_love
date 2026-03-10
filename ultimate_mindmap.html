@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISAC 知识图谱 - 终极版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; overflow-x: hidden; background: #0a0a1a; }
+        
+        /* 模式切换 */
+        #mode-switch {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000;
+            display: flex; gap: 15px; background: rgba(0,0,0,0.9); padding: 15px 40px;
+            border-radius: 50px; border: 2px solid #00d4ff; box-shadow: 0 0 30px rgba(0,212,255,0.5);
+        }
+        .mode-btn {
+            background: transparent; color: #fff; border: 2px solid #666; padding: 15px 35px;
+            border-radius: 30px; cursor: pointer; font-size: 16px; font-weight: bold;
+            transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border-color: #00d4ff; box-shadow: 0 0 30px rgba(0,212,255,0.6);
+            transform: scale(1.05);
+        }
+        .mode-btn:hover { transform: scale(1.08); }
+        
+        /* 3D 视图 */
+        #view-3d { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        #view-3d canvas { display: block; }
+        
+        /* 2D 视图 */
+        #view-2d {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); overflow-y: auto;
+        }
+        
+        /* 摘要面板 */
+        .summary-panel {
+            max-width: 1200px; margin: 0 auto; padding: 30px;
+        }
+        .summary-card {
+            background: rgba(255,255,255,0.95); border-radius: 20px; padding: 40px;
+            margin-bottom: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .summary-title {
+            font-size: 2em; color: #1a1a2e; margin-bottom: 20px; font-weight: bold;
+        }
+        .summary-meta {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .meta-item {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; padding: 20px; border-radius: 15px;
+        }
+        .meta-label { font-size: 0.9em; opacity: 0.9; margin-bottom: 5px; }
+        .meta-value { font-size: 1.1em; font-weight: bold; }
+        
+        .summary-section { margin: 30px 0; }
+        .section-title {
+            font-size: 1.5em; color: #1a1a2e; margin-bottom: 20px;
+            padding-bottom: 10px; border-bottom: 3px solid #00d4ff;
+        }
+        .challenge-list, .contribution-list {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .challenge-item, .contribution-item {
+            background: #f8f9fa; padding: 25px; border-radius: 15px;
+            border-left: 5px solid #00d4ff;
+        }
+        .challenge-item h4, .contribution-item h4 {
+            color: #1a1a2e; margin-bottom: 10px;
+        }
+        
+        /* 概念地图 */
+        .concept-map {
+            background: rgba(255,255,255,0.95); border-radius: 20px; padding: 40px;
+            margin-bottom: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .layer-group {
+            margin: 30px 0; padding: 20px;
+            background: #f8f9fa; border-radius: 15px;
+            border-left: 5px solid #00d4ff;
+        }
+        .layer-title {
+            font-size: 1.3em; font-weight: bold; margin-bottom: 20px;
+            padding-bottom: 10px; border-bottom: 2px solid #ddd;
+        }
+        .node-card {
+            background: white; padding: 20px; margin: 15px 0;
+            border-radius: 12px; border-left: 4px solid #00d4ff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .node-card:hover {
+            transform: translateX(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .node-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .node-name { font-size: 1.2em; font-weight: bold; color: #1a1a2e; }
+        .node-importance { font-size: 1.2em; }
+        .node-type {
+            display: inline-block; background: #00d4ff; color: white;
+            padding: 5px 15px; border-radius: 20px; font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+        .node-definition { color: #666; line-height: 1.6; }
+        
+        /* 关系列表 */
+        .relations-section {
+            background: rgba(255,255,255,0.95); border-radius: 20px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .relation-item {
+            display: flex; align-items: center; gap: 10px; padding: 15px;
+            margin: 10px 0; background: #f8f9fa; border-radius: 10px;
+            flex-wrap: wrap;
+        }
+        .relation-source, .relation-target {
+            background: #00d4ff; color: white; padding: 8px 20px;
+            border-radius: 20px; font-weight: bold;
+        }
+        .relation-type {
+            background: #ff6b6b; color: white; padding: 8px 20px;
+            border-radius: 20px; font-weight: bold;
+        }
+        .relation-arrow { color: #666; font-size: 1.2em; }
+        
+        /* 工具栏 */
+        .toolbar {
+            position: fixed; top: 100px; right: 20px; display: flex;
+            flex-direction: column; gap: 10px; z-index: 1000;
+        }
+        .toolbar button {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; border: none; padding: 15px 25px; border-radius: 25px;
+            cursor: pointer; font-size: 14px; font-weight: bold;
+            transition: all 0.3s; box-shadow: 0 0 20px rgba(0,212,255,0.5);
+        }
+        .toolbar button:hover { transform: scale(1.1); box-shadow: 0 0 30px rgba(0,212,255,0.8); }
+        
+        /* 统计面板 */
+        .stats-panel {
+            position: fixed; bottom: 20px; left: 20px; display: grid;
+            grid-template-columns: repeat(2, 1fr); gap: 15px; z-index: 1000;
+        }
+        .stat-card {
+            background: rgba(0,212,255,0.15); backdrop-filter: blur(10px);
+            border: 2px solid #00d4ff; border-radius: 15px; padding: 20px;
+            text-align: center; color: white;
+            box-shadow: 0 0 30px rgba(0,212,255,0.4);
+        }
+        .stat-number { font-size: 2.5em; font-weight: bold; color: #00d4ff; }
+        .stat-label { margin-top: 5px; font-size: 0.9em; }
+        
+        /* 3D 详情面板 */
+        #info-panel {
+            position: fixed; top: 50%; right: 20px; transform: translateY(-50%);
+            width: 350px; max-height: 80vh; overflow-y: auto;
+            background: rgba(0,0,0,0.95); border: 2px solid #00d4ff;
+            border-radius: 20px; padding: 25px; color: white;
+            z-index: 1000; display: none;
+            box-shadow: 0 0 40px rgba(0,212,255,0.5);
+        }
+        #info-panel h3 {
+            color: #00d4ff; margin-bottom: 15px; font-size: 1.5em;
+            padding-bottom: 10px; border-bottom: 2px solid #00d4ff;
+        }
+        #info-panel .info-row { margin: 15px 0; }
+        #info-panel .info-label { color: #00d4ff; font-weight: bold; margin-bottom: 5px; }
+        #info-panel .info-value { color: #fff; line-height: 1.6; }
+        #info-panel .close-btn {
+            position: absolute; top: 15px; right: 15px; background: none;
+            border: none; color: #fff; font-size: 1.5em; cursor: pointer;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0a0a1a; display: flex; justify-content: center;
+            align-items: center; z-index: 9999;
+        }
+        .loading-spinner {
+            width: 100px; height: 100px; border: 4px solid rgba(0,212,255,0.3);
+            border-top-color: #00d4ff; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* 图例 */
+        .legend {
+            position: fixed; bottom: 20px; right: 20px;
+            background: rgba(0,0,0,0.9); border: 2px solid #00d4ff;
+            border-radius: 15px; padding: 20px; color: white; z-index: 1000;
+        }
+        .legend h4 { color: #00d4ff; margin-bottom: 15px; }
+        .legend-item {
+            display: flex; align-items: center; gap: 10px; margin: 10px 0;
+        }
+        .legend-color {
+            width: 20px; height: 20px; border-radius: 50%;
+            box-shadow: 0 0 10px currentColor;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading"><div class="loading-spinner"></div></div>
+    
+    <div id="mode-switch">
+        <button class="mode-btn active" onclick="switchMode('3d')">🌌 3D 粒子模式</button>
+        <button class="mode-btn" onclick="switchMode('2d')">📊 2D 详细模式</button>
+    </div>
+    
+    <!-- 3D 视图 -->
+    <div id="view-3d">
+        <canvas id="canvas"></canvas>
+        <div class="toolbar">
+            <button onclick="resetView()">🎯 重置视图</button>
+            <button onclick="toggleAnimation()">⚡ 暂停/继续</button>
+            <button onclick="toggleLabels()">🏷️ 显示/隐藏标签</button>
+            <button onclick="exportImage()">📷 导出图片</button>
+        </div>
+        <div class="stats-panel">
+            <div class="stat-card"><div class="stat-number">23</div><div class="stat-label">NODES</div></div>
+            <div class="stat-card"><div class="stat-number">23</div><div class="stat-label">EDGES</div></div>
+            <div class="stat-card"><div class="stat-number">7</div><div class="stat-label">LAYERS</div></div>
+            <div class="stat-card"><div class="stat-number">5★</div><div class="stat-label">CORE</div></div>
+        </div>
+        <div id="info-panel">
+            <button class="close-btn" onclick="closeInfo()">×</button>
+            <h3 id="info-title">Node Info</h3>
+            <div id="info-content"></div>
+        </div>
+        <div class="legend">
+            <h4>📊 LAYER LEGEND</h4>
+            <div class="legend-item"><div class="legend-color" style="background:#ff6b6b"></div><span>概念层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#4ecdc4"></div><span>架构层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#45b7d1"></div><span>应用层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#96ceb4"></div><span>接口层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#ffeaa7"></div><span>物理层</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:#a29bfe"></div><span>性能层</span></div>
+        </div>
+    </div>
+    
+    <!-- 2D 视图 -->
+    <div id="view-2d">
+        <div class="summary-panel">
+            <!-- 论文摘要 -->
+            <div class="summary-card">
+                <h1 class="summary-title">📄 Toward Native ISAC Support in O-RAN Architectures for 6G</h1>
+                <div class="summary-meta">
+                    <div class="meta-item">
+                        <div class="meta-label">AUTHORS</div>
+                        <div class="meta-value">Eduardo Baena, Rajesh Krishnan, Mai Vu, Gil Zussman, Dimitrios Koutsonikolas</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">SOURCE</div>
+                        <div class="meta-value">arXiv:2603.03607</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">DATE</div>
+                        <div class="meta-value">2026-03-04</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">VALIDATION</div>
+                        <div class="meta-value">原型实现</div>
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">🎯 研究问题</h2>
+                    <p style="font-size: 1.1em; color: #333; margin-bottom: 20px;">当前 O-RAN 规范缺乏对 sensing 的架构支持</p>
+                    <div class="challenge-list">
+                        <div class="challenge-item"><h4>挑战1</h4><p>无服务模型暴露物理层可观测数据</p></div><div class="challenge-item"><h4>挑战2</h4><p>无执行框架支持 sub-millisecond sensing 任务</p></div><div class="challenge-item"><h4>挑战3</h4><p>前传接口无法关联发射波形与反射</p></div>
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">💡 核心贡献</h2>
+                    <div class="contribution-list">
+                        <div class="contribution-item"><h4>贡献1</h4><p>Sensing dApps</p></div><div class="contribution-item"><h4>贡献2</h4><p>E2SM-SENS 服务模型</p></div><div class="contribution-item"><h4>贡献3</h4><p>Open Fronthaul 元数据</p></div>
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <h2 class="section-title">🔮 未来方向</h2>
+                    <div class="challenge-list">
+                        <div class="challenge-item"><h4>Bistatic Sensing</h4></div><div class="challenge-item"><h4>Cooperative Sensing</h4></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 概念地图 -->
+            <div class="concept-map">
+                <h2 class="section-title">🧠 概念地图 (按层级分类)</h2>
+                
+        <div class="layer-group" style="border-left-color: #ff6b6b;">
+            <div class="layer-title" style="color: #ff6b6b;">概念层</div>
+        
+            <div class="node-card" style="border-left-color: #ff6b6b;">
+                <div class="node-header">
+                    <span class="node-name">ISAC</span>
+                    <span class="node-importance">⭐⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">核心范式</div>
+                <div class="node-definition">集成传感与通信，使用无线通信基础设施进行环境 sensing</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #ff6b6b;">
+                <div class="node-header">
+                    <span class="node-name">6G</span>
+                    <span class="node-importance">⭐⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">网络代际</div>
+                <div class="node-definition">第六代移动通信网络，支持 sensing 等新功能</div>
+            </div>
+            </div>
+        <div class="layer-group" style="border-left-color: #4ecdc4;">
+            <div class="layer-title" style="color: #4ecdc4;">架构层</div>
+        
+            <div class="node-card" style="border-left-color: #4ecdc4;">
+                <div class="node-header">
+                    <span class="node-name">O-RAN</span>
+                    <span class="node-importance">⭐⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">架构标准</div>
+                <div class="node-definition">开放无线接入网，提供智能、开放的 RAN 架构</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #4ecdc4;">
+                <div class="node-header">
+                    <span class="node-name">O-DU</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">网元</div>
+                <div class="node-definition">O-RAN 分布式单元，负责基带处理</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #4ecdc4;">
+                <div class="node-header">
+                    <span class="node-name">O-RU</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">网元</div>
+                <div class="node-definition">O-RAN 射频单元，负责 RF 处理</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #4ecdc4;">
+                <div class="node-header">
+                    <span class="node-name">Near-RT RIC</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">控制器</div>
+                <div class="node-definition">近实时 RAN 智能控制器，延迟<10ms</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #4ecdc4;">
+                <div class="node-header">
+                    <span class="node-name">Non-RT RIC</span>
+                    <span class="node-importance">⭐⭐⭐</span>
+                </div>
+                <div class="node-type">控制器</div>
+                <div class="node-definition">非实时 RAN 智能控制器，延迟>1s</div>
+            </div>
+            </div>
+        <div class="layer-group" style="border-left-color: #45b7d1;">
+            <div class="layer-title" style="color: #45b7d1;">应用层</div>
+        
+            <div class="node-card" style="border-left-color: #45b7d1;">
+                <div class="node-header">
+                    <span class="node-name">xApps</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">应用</div>
+                <div class="node-definition">运行在 Near-RT RIC 上的应用</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #45b7d1;">
+                <div class="node-header">
+                    <span class="node-name">dApps</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">应用</div>
+                <div class="node-definition">运行在 O-DU 上的分布式应用，处理 sensing</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #45b7d1;">
+                <div class="node-header">
+                    <span class="node-name">单静态传感</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">sensing 模式</div>
+                <div class="node-definition">发射和接收在同一位置的 sensing</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #45b7d1;">
+                <div class="node-header">
+                    <span class="node-name">双静态传感</span>
+                    <span class="node-importance">⭐⭐⭐</span>
+                </div>
+                <div class="node-type">sensing 模式</div>
+                <div class="node-definition">发射和接收在不同位置的 sensing</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #45b7d1;">
+                <div class="node-header">
+                    <span class="node-name">协作传感</span>
+                    <span class="node-importance">⭐⭐⭐</span>
+                </div>
+                <div class="node-type">sensing 模式</div>
+                <div class="node-definition">多个基站协作进行 sensing</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #45b7d1;">
+                <div class="node-header">
+                    <span class="node-name">闭环控制</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">控制模式</div>
+                <div class="node-definition">基于 sensing 反馈的实时控制</div>
+            </div>
+            </div>
+        <div class="layer-group" style="border-left-color: #96ceb4;">
+            <div class="layer-title" style="color: #96ceb4;">接口层</div>
+        
+            <div class="node-card" style="border-left-color: #96ceb4;">
+                <div class="node-header">
+                    <span class="node-name">E2SM-SENS</span>
+                    <span class="node-importance">⭐⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">服务模型</div>
+                <div class="node-definition">E2 服务模型 for SENSing，支持 sensing 遥测订阅</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #96ceb4;">
+                <div class="node-header">
+                    <span class="node-name">E2 接口</span>
+                    <span class="node-importance">⭐⭐⭐</span>
+                </div>
+                <div class="node-type">接口</div>
+                <div class="node-definition">Near-RT RIC 与 O-CU/O-DU 之间的接口</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #96ceb4;">
+                <div class="node-header">
+                    <span class="node-name">Open Fronthaul</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">接口</div>
+                <div class="node-definition">O-DU 与 O-RU 之间的开放前传接口</div>
+            </div>
+            </div>
+        <div class="layer-group" style="border-left-color: #ffeaa7;">
+            <div class="layer-title" style="color: #ffeaa7;">物理层</div>
+        
+            <div class="node-card" style="border-left-color: #ffeaa7;">
+                <div class="node-header">
+                    <span class="node-name">IQ 采样</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">信号处理</div>
+                <div class="node-definition">同相/正交采样，用于提取 sensing 特征</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #ffeaa7;">
+                <div class="node-header">
+                    <span class="node-name">波束成形</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">天线技术</div>
+                <div class="node-definition">使用天线阵列定向发射/接收</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #ffeaa7;">
+                <div class="node-header">
+                    <span class="node-name">全双工</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">通信技术</div>
+                <div class="node-definition">同时同频进行发射和接收</div>
+            </div>
+            </div>
+        <div class="layer-group" style="border-left-color: #dfe6e9;">
+            <div class="layer-title" style="color: #dfe6e9;">特征层</div>
+        
+            <div class="node-card" style="border-left-color: #dfe6e9;">
+                <div class="node-header">
+                    <span class="node-name">延迟特征</span>
+                    <span class="node-importance">⭐⭐⭐</span>
+                </div>
+                <div class="node-type">sensing 特征</div>
+                <div class="node-definition">从 IQ 采样提取的目标距离信息</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #dfe6e9;">
+                <div class="node-header">
+                    <span class="node-name">多普勒特征</span>
+                    <span class="node-importance">⭐⭐⭐</span>
+                </div>
+                <div class="node-type">sensing 特征</div>
+                <div class="node-definition">从 IQ 采样提取的目标速度信息</div>
+            </div>
+            
+            <div class="node-card" style="border-left-color: #dfe6e9;">
+                <div class="node-header">
+                    <span class="node-name">角度特征</span>
+                    <span class="node-importance">⭐⭐⭐</span>
+                </div>
+                <div class="node-type">sensing 特征</div>
+                <div class="node-definition">从 IQ 采样提取的目标方向信息</div>
+            </div>
+            </div>
+        <div class="layer-group" style="border-left-color: #a29bfe;">
+            <div class="layer-title" style="color: #a29bfe;">性能层</div>
+        
+            <div class="node-card" style="border-left-color: #a29bfe;">
+                <div class="node-header">
+                    <span class="node-name">端到端延迟</span>
+                    <span class="node-importance">⭐⭐⭐⭐</span>
+                </div>
+                <div class="node-type">性能指标</div>
+                <div class="node-definition">sensing 闭环控制的总延迟</div>
+            </div>
+            </div>
+            </div>
+            
+            <!-- 关系网络 -->
+            <div class="relations-section">
+                <h2 class="section-title">🔗 关系网络 (23条)</h2>
+                
+        <div class="relation-item">
+            <span class="relation-source">ISAC</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">属于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">6G</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">ISAC</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">集成于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RAN</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">O-DU</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">属于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RAN</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">O-RU</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">属于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RAN</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">Near-RT RIC</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">属于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RAN</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">xApps</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">运行于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">Near-RT RIC</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">dApps</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">运行于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-DU</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">E2SM-SENS</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">服务于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">xApps</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">E2SM-SENS</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">支持</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">E2SM-SENS</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">使用</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">E2 接口</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">Open Fronthaul</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">连接</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-DU</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">Open Fronthaul</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">连接</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">O-RU</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">dApps</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">处理</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">IQ 采样</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">IQ 采样</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">提取</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">延迟特征</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">IQ 采样</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">提取</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">多普勒特征</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">IQ 采样</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">提取</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">角度特征</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">波束成形</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">用于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">全双工</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">用于</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">单静态传感</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">模式</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">双静态传感</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">模式</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">协作传感</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">模式</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">闭环控制</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">实现</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">ISAC</span>
+        </div>
+        
+        <div class="relation-item">
+            <span class="relation-source">端到端延迟</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-type">衡量</span>
+            <span class="relation-arrow">→</span>
+            <span class="relation-target">闭环控制</span>
+        </div>
+        
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script>
+        const nodes = [{"id": "E1", "name": "ISAC", "type": "核心范式", "layer": "概念层", "definition": "集成传感与通信，使用无线通信基础设施进行环境 sensing", "importance": 5}, {"id": "E2", "name": "6G", "type": "网络代际", "layer": "概念层", "definition": "第六代移动通信网络，支持 sensing 等新功能", "importance": 5}, {"id": "E3", "name": "O-RAN", "type": "架构标准", "layer": "架构层", "definition": "开放无线接入网，提供智能、开放的 RAN 架构", "importance": 5}, {"id": "E4", "name": "O-DU", "type": "网元", "layer": "架构层", "definition": "O-RAN 分布式单元，负责基带处理", "importance": 4}, {"id": "E5", "name": "O-RU", "type": "网元", "layer": "架构层", "definition": "O-RAN 射频单元，负责 RF 处理", "importance": 4}, {"id": "E6", "name": "Near-RT RIC", "type": "控制器", "layer": "架构层", "definition": "近实时 RAN 智能控制器，延迟<10ms", "importance": 4}, {"id": "E7", "name": "Non-RT RIC", "type": "控制器", "layer": "架构层", "definition": "非实时 RAN 智能控制器，延迟>1s", "importance": 3}, {"id": "E8", "name": "xApps", "type": "应用", "layer": "应用层", "definition": "运行在 Near-RT RIC 上的应用", "importance": 4}, {"id": "E9", "name": "dApps", "type": "应用", "layer": "应用层", "definition": "运行在 O-DU 上的分布式应用，处理 sensing", "importance": 4}, {"id": "E10", "name": "E2SM-SENS", "type": "服务模型", "layer": "接口层", "definition": "E2 服务模型 for SENSing，支持 sensing 遥测订阅", "importance": 5}, {"id": "E11", "name": "E2 接口", "type": "接口", "layer": "接口层", "definition": "Near-RT RIC 与 O-CU/O-DU 之间的接口", "importance": 3}, {"id": "E12", "name": "Open Fronthaul", "type": "接口", "layer": "接口层", "definition": "O-DU 与 O-RU 之间的开放前传接口", "importance": 4}, {"id": "E13", "name": "IQ 采样", "type": "信号处理", "layer": "物理层", "definition": "同相/正交采样，用于提取 sensing 特征", "importance": 4}, {"id": "E14", "name": "波束成形", "type": "天线技术", "layer": "物理层", "definition": "使用天线阵列定向发射/接收", "importance": 4}, {"id": "E15", "name": "全双工", "type": "通信技术", "layer": "物理层", "definition": "同时同频进行发射和接收", "importance": 4}, {"id": "E16", "name": "延迟特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标距离信息", "importance": 3}, {"id": "E17", "name": "多普勒特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标速度信息", "importance": 3}, {"id": "E18", "name": "角度特征", "type": "sensing 特征", "layer": "特征层", "definition": "从 IQ 采样提取的目标方向信息", "importance": 3}, {"id": "E19", "name": "单静态传感", "type": "sensing 模式", "layer": "应用层", "definition": "发射和接收在同一位置的 sensing", "importance": 4}, {"id": "E20", "name": "双静态传感", "type": "sensing 模式", "layer": "应用层", "definition": "发射和接收在不同位置的 sensing", "importance": 3}, {"id": "E21", "name": "协作传感", "type": "sensing 模式", "layer": "应用层", "definition": "多个基站协作进行 sensing", "importance": 3}, {"id": "E22", "name": "端到端延迟", "type": "性能指标", "layer": "性能层", "definition": "sensing 闭环控制的总延迟", "importance": 4}, {"id": "E23", "name": "闭环控制", "type": "控制模式", "layer": "应用层", "definition": "基于 sensing 反馈的实时控制", "importance": 4}];
+        const edges = [{"source": "ISAC", "target": "6G", "type": "属于", "description": "ISAC 是 6G 的关键技术"}, {"source": "ISAC", "target": "O-RAN", "type": "集成于", "description": "ISAC 需要集成到 O-RAN 架构"}, {"source": "O-DU", "target": "O-RAN", "type": "属于", "description": "O-DU 是 O-RAN 的组件"}, {"source": "O-RU", "target": "O-RAN", "type": "属于", "description": "O-RU 是 O-RAN 的组件"}, {"source": "Near-RT RIC", "target": "O-RAN", "type": "属于", "description": "Near-RT RIC 是 O-RAN 的组件"}, {"source": "xApps", "target": "Near-RT RIC", "type": "运行于", "description": "xApps 运行在 Near-RT RIC 上"}, {"source": "dApps", "target": "O-DU", "type": "运行于", "description": "dApps 运行在 O-DU 上"}, {"source": "E2SM-SENS", "target": "xApps", "type": "服务于", "description": "E2SM-SENS 为 xApps 提供 sensing 数据"}, {"source": "E2SM-SENS", "target": "ISAC", "type": "支持", "description": "E2SM-SENS 支持 ISAC 功能"}, {"source": "E2SM-SENS", "target": "E2 接口", "type": "使用", "description": "E2SM-SENS 基于 E2 接口"}, {"source": "Open Fronthaul", "target": "O-DU", "type": "连接", "description": "Open Fronthaul 连接 O-DU"}, {"source": "Open Fronthaul", "target": "O-RU", "type": "连接", "description": "Open Fronthaul 连接 O-RU"}, {"source": "dApps", "target": "IQ 采样", "type": "处理", "description": "dApps 处理 IQ 采样数据"}, {"source": "IQ 采样", "target": "延迟特征", "type": "提取", "description": "从 IQ 采样提取延迟特征"}, {"source": "IQ 采样", "target": "多普勒特征", "type": "提取", "description": "从 IQ 采样提取多普勒特征"}, {"source": "IQ 采样", "target": "角度特征", "type": "提取", "description": "从 IQ 采样提取角度特征"}, {"source": "波束成形", "target": "ISAC", "type": "用于", "description": "波束成形用于 ISAC"}, {"source": "全双工", "target": "ISAC", "type": "用于", "description": "全双工用于 ISAC"}, {"source": "单静态传感", "target": "ISAC", "type": "模式", "description": "单静态是 ISAC 的一种模式"}, {"source": "双静态传感", "target": "ISAC", "type": "模式", "description": "双静态是 ISAC 的一种模式"}, {"source": "协作传感", "target": "ISAC", "type": "模式", "description": "协作是 ISAC 的一种模式"}, {"source": "闭环控制", "target": "ISAC", "type": "实现", "description": "ISAC 实现闭环控制"}, {"source": "端到端延迟", "target": "闭环控制", "type": "衡量", "description": "端到端延迟衡量闭环控制性能"}];
+        const summary = {"title": "Toward Native ISAC Support in O-RAN Architectures for 6G", "authors": "Eduardo Baena, Rajesh Krishnan, Mai Vu, Gil Zussman, Dimitrios Koutsonikolas", "source": "arXiv:2603.03607", "date": "2026-03-04", "problem": "当前 O-RAN 规范缺乏对 sensing 的架构支持", "challenges": ["无服务模型暴露物理层可观测数据", "无执行框架支持 sub-millisecond sensing 任务", "前传接口无法关联发射波形与反射"], "contributions": ["Sensing dApps", "E2SM-SENS 服务模型", "Open Fronthaul 元数据"], "validation": "原型实现", "future": ["Bistatic Sensing", "Cooperative Sensing"]};
+        
+        let scene, camera, renderer, nodeMeshes = [], edgeLines = [], animationId, isAnimating = true, showLabels = false;
+        const layerColors = {'概念层': 0xff6b6b, '架构层': 0x4ecdc4, '应用层': 0x45b7d1, '接口层': 0x96ceb4, '物理层': 0xffeaa7, '特征层': 0xdfe6e9, '性能层': 0xa29bfe};
+        const importanceSize = {5: 2.5, 4: 2.0, 3: 1.5};
+        
+        function switchMode(mode) {
+            document.getElementById('view-3d').style.display = mode === '3d' ? 'block' : 'none';
+            document.getElementById('view-2d').style.display = mode === '2d' ? 'block' : 'none';
+            document.querySelectorAll('.mode-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', (mode === '3d' && i === 0) || (mode === '2d' && i === 1));
+            });
+        }
+        
+        function init3D() {
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0a1a);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000); camera.position.z = 60;
+            renderer = new THREE.WebGLRenderer({canvas: document.getElementById('canvas'), antialias: true, alpha: true});
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const pointLight = new THREE.PointLight(0x00d4ff, 1.2, 100); pointLight.position.set(0, 0, 30); scene.add(pointLight);
+            
+            // 创建节点（带标签）
+            nodes.forEach((node, i) => {
+                const geometry = new THREE.SphereGeometry(importanceSize[node.importance] || 1.5, 32, 32);
+                const color = layerColors[node.layer] || 0xffffff;
+                const material = new THREE.MeshPhongMaterial({color: color, emissive: color, emissiveIntensity: 0.6, transparent: true, opacity: 0.95});
+                const sphere = new THREE.Mesh(geometry, material);
+                
+                const phi = Math.acos(-1 + (2 * i) / nodes.length);
+                const theta = Math.sqrt(nodes.length * Math.PI) * phi;
+                sphere.position.set(40 * Math.cos(theta) * Math.sin(phi), 40 * Math.sin(theta) * Math.sin(phi), 40 * Math.cos(phi));
+                
+                sphere.userData = node; scene.add(sphere); nodeMeshes.push(sphere);
+                
+                // 光晕
+                const glow = new THREE.Mesh(
+                    new THREE.SphereGeometry(importanceSize[node.importance] * 1.8, 32, 32),
+                    new THREE.MeshBasicMaterial({color: color, transparent: true, opacity: 0.25, side: THREE.BackSide})
+                );
+                sphere.add(glow);
+                
+                // 标签（可选显示）
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 512; canvas.height = 128;
+                ctx.fillStyle = color; ctx.fillRect(0, 0, 512, 128);
+                ctx.fillStyle = '#000'; ctx.font = 'bold 48px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(node.name, 256, 64);
+                const texture = new THREE.CanvasTexture(canvas);
+                const labelMat = new THREE.SpriteMaterial({map: texture, transparent: true});
+                const label = new THREE.Sprite(labelMat);
+                label.scale.set(15, 4, 1);
+                label.position.set(0, importanceSize[node.importance] + 2, 0);
+                label.visible = showLabels;
+                sphere.add(label);
+            });
+            
+            // 创建边
+            edges.forEach(edge => {
+                const src = nodeMeshes.find(n => n.userData.name === edge.source);
+                const tgt = nodeMeshes.find(n => n.userData.name === edge.target);
+                if (src && tgt) {
+                    const geometry = new THREE.BufferGeometry().setFromPoints([src.position, tgt.position]);
+                    const material = new THREE.LineBasicMaterial({color: 0x00d4ff, transparent: true, opacity: 0.4});
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line); edgeLines.push(line);
+                }
+            });
+            
+            // 背景粒子
+            const particles = createParticles(3000);
+            scene.add(particles);
+            gsap.to(particles.rotation, {y: Math.PI*2, duration: 90, repeat: -1, ease: "linear"});
+            
+            setupInteraction();
+            
+            setTimeout(() => {
+                document.getElementById('loading').style.opacity = '0';
+                setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1000);
+            }, 1000);
+            
+            animate();
+        }
+        
+        function createParticles(count) {
+            const vertices = [];
+            for (let i = 0; i < count; i++) {
+                vertices.push((Math.random()-0.5)*300, (Math.random()-0.5)*300, (Math.random()-0.5)*300);
+            }
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            return new THREE.Points(geometry, new THREE.PointsMaterial({color: 0x00d4ff, size: 0.6, transparent: true, opacity: 0.6}));
+        }
+        
+        function setupInteraction() {
+            const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+            
+            document.addEventListener('mousemove', (e) => {
+                mouse.set((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(nodeMeshes);
+                
+                if (intersects.length > 0) {
+                    document.body.style.cursor = 'pointer';
+                    showInfo(intersects[0].object.userData);
+                } else {
+                    document.body.style.cursor = 'default';
+                    closeInfo();
+                }
+            });
+            
+            document.addEventListener('wheel', (e) => {
+                camera.position.z = Math.max(30, Math.min(120, camera.position.z + e.deltaY*0.08));
+            });
+            
+            let dragging = false, prev = {x:0, y:0};
+            document.addEventListener('mousedown', () => dragging = true);
+            document.addEventListener('mouseup', () => dragging = false);
+            document.addEventListener('mousemove', (e) => {
+                if (dragging) {
+                    scene.rotation.y += (e.offsetX - prev.x) * 0.008;
+                    scene.rotation.x += (e.offsetY - prev.y) * 0.008;
+                }
+                prev = {x: e.offsetX, y: e.offsetY};
+            });
+        }
+        
+        function showInfo(node) {
+            const panel = document.getElementById('info-panel');
+            document.getElementById('info-title').textContent = node.name;
+            document.getElementById('info-content').innerHTML = `
+                <div class="info-row">
+                    <div class="info-label">类型 TYPE</div>
+                    <div class="info-value">${node.type}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">层级 LAYER</div>
+                    <div class="info-value">${node.layer}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">定义 DEFINITION</div>
+                    <div class="info-value">${node.definition}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">重要度 IMPORTANCE</div>
+                    <div class="info-value">${'⭐'.repeat(node.importance)}</div>
+                </div>
+            `;
+            panel.style.display = 'block';
+        }
+        
+        function closeInfo() { document.getElementById('info-panel').style.display = 'none'; }
+        
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            if (isAnimating) {
+                scene.rotation.y += 0.0015;
+                nodeMeshes.forEach((node, i) => {
+                    const s = 1 + Math.sin(Date.now()*0.0015 + i)*0.12;
+                    node.scale.set(s, s, s);
+                });
+            }
+            renderer.render(scene, camera);
+        }
+        
+        function resetView() {
+            gsap.to(camera.position, {z: 60, duration: 1.5});
+            gsap.to(scene.rotation, {x: 0, y: 0, duration: 1.5});
+        }
+        
+        function toggleAnimation() { isAnimating = !isAnimating; }
+        
+        function toggleLabels() {
+            showLabels = !showLabels;
+            nodeMeshes.forEach(node => { node.children.forEach(child => { if (child.isSprite) child.visible = showLabels; }); });
+        }
+        
+        function exportImage() {
+            const a = document.createElement('a');
+            a.href = renderer.domElement.toDataURL('image/png', 1.0);
+            a.download = 'ISAC_knowledge_graph_ultimate.png';
+            a.click();
+        }
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        init3D();
+    </script>
+</body>
+</html>

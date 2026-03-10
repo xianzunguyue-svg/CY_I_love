@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>概念图谱可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        .mermaid {
+            text-align: center;
+            padding: 20px;
+        }
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .legend h3 {
+            margin-top: 0;
+            color: #666;
+        }
+        .legend-item {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 概念图谱可视化</h1>
+        <div class="mermaid">
+graph TD
+    %% 样式定义
+    classDef theory fill:#e1f5ff,stroke:#0066cc;
+    classDef method fill:#fff4e1,stroke:#cc6600;
+    classDef person fill:#f0e1ff,stroke:#6600cc;
+    classDef event fill:#ffe1e1,stroke:#cc0000;
+    classDef org fill:#e1ffe1,stroke:#00cc00;
+    classDef other fill:#f5f5f5,stroke:#666666;
+
+    %% 概念节点
+    知识图谱["知识图谱<br/><small>以图形化方式表示知识结构的技术...</small>"]:::method
+    本体论["本体论<br/><small>研究存在本质的哲学分支...</small>"]:::theory
+    语义网络["语义网络<br/><small>用节点和边表示概念及其语义关系...</small>"]:::theory
+
+    %% 关系连线
+    知识图谱 -->|"参考: 本体论为知识图谱提供理论基础..."| 本体论
+    知识图谱 -.->|"继承: 知识图谱由语义网络发展而来..."| 语义网络
+        </div>
+        <div class="legend">
+            <h3>图例说明</h3>
+            <span class="legend-item" style="background:#e1f5ff;border:1px solid #0066cc;">📘 理论</span>
+            <span class="legend-item" style="background:#fff4e1;border:1px solid #cc6600;">📙 方法</span>
+            <span class="legend-item" style="background:#f0e1ff;border:1px solid #6600cc;">👤 人物</span>
+            <span class="legend-item" style="background:#ffe1e1;border:1px solid #cc0000;">📅 事件</span>
+            <span class="legend-item" style="background:#e1ffe1;border:1px solid #00cc00;">🏢 组织</span>
+            <span class="legend-item" style="background:#f5f5f5;border:1px solid #666666;">📄 其他</span>
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>

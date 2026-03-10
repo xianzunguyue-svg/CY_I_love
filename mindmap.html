@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISAC 知识思维导图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .toolbar {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .toolbar button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .toolbar button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+        }
+        #mindmap {
+            width: 100%;
+            height: 700px;
+            padding: 20px;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-top: 1px solid #e9ecef;
+        }
+        .info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .info ul {
+            margin-left: 20px;
+            color: #666;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px 30px;
+            background: #f8f9fa;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 ISAC 知识思维导图</h1>
+            <p>6G O-RAN 架构中的集成传感与通信技术</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">23</div>
+                <div class="stat-label">实体节点</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">23</div>
+                <div class="stat-label">关系边</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">7</div>
+                <div class="stat-label">层级</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">核心贡献</div>
+            </div>
+        </div>
+        
+        <div class="toolbar">
+            <button onclick="expandAll()">📖 全部展开</button>
+            <button onclick="collapseAll()">📕 全部折叠</button>
+            <button onclick="fitView()">🎯 适应视图</button>
+            <button onclick="toggleSidebar()">📋 切换大纲</button>
+            <button onclick="exportSVG()">💾 导出 SVG</button>
+            <button onclick="exportPNG()">📷 导出 PNG</button>
+        </div>
+        
+        <svg id="mindmap"></svg>
+        
+        <div class="info">
+            <h3>📖 使用说明</h3>
+            <ul>
+                <li><strong>缩放:</strong> 鼠标滚轮</li>
+                <li><strong>平移:</strong> 拖拽空白区域</li>
+                <li><strong>展开/折叠:</strong> 点击节点前的 +/- 按钮</li>
+                <li><strong>查看详情:</strong> 悬停在节点上</li>
+                <li><strong>导出:</strong> 点击工具栏的导出按钮</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.min.js"></script>
+    <script>
+        const markdown = `# ISAC (集成传感与通信)
+
+## 属于
+### 6G - 第六代移动通信网络
+
+## 集成于
+### O-RAN - 开放无线接入网
+#### 架构层次
+##### 应用层
+###### xApps - O-RAN 近实时应用
+###### Non-RT RIC - 非实时 RAN 智能控制器
+##### 近实时层
+###### Near-RT RIC - 近实时 RAN 智能控制器 (<10ms)
+###### E2SM-SENS - 传感服务模型
+##### 分布式单元层
+###### O-DU - O-RAN 分布式单元
+####### dApps - 分布式应用 (处理 sensing)
+######## IQ 采样 - 同相/正交采样处理
+######### 延迟特征 - 目标距离信息
+######### 多普勒特征 - 目标速度信息
+######### 角度特征 - 目标方向信息
+##### 射频单元层
+###### O-RU - O-RAN 射频单元
+####### Open Fronthaul - 开放前传接口
+
+## 核心技术
+### 波束成形 - Beamforming
+#### 提高 sensing 分辨率
+#### 提高通信质量
+### 全双工 - Full-Duplex
+#### 同时同频发射和接收
+#### 实现连续 sensing 和通信
+
+## Sensing 模式
+### 单静态传感 - Monostatic Sensing
+#### 发射和接收在同一位置
+#### 简化同步和校准
+### 双静态传感 - Bistatic Sensing
+#### 发射和接收在不同位置
+### 协作传感 - Cooperative Sensing
+#### 多个基站协作
+
+## 研究问题
+### 挑战 1: 无服务模型暴露物理层可观测数据
+### 挑战 2: 无执行框架支持 sub-millisecond sensing
+### 挑战 3: 前传接口无法关联发射波形与反射
+
+## 核心贡献
+### 贡献 1: Sensing dApps (O-DU 层)
+#### 处理 IQ 采样数据
+#### 提取延迟特征
+#### 提取多普勒特征
+#### 提取角度特征
+### 贡献 2: E2SM-SENS 服务模型 (Near-RT RIC 层)
+#### 可配置周期性订阅
+#### 支持 sensing 遥测传输
+#### 与现有 E2SM 架构兼容
+### 贡献 3: Open Fronthaul 元数据 (前传层)
+#### 波形发射时间戳
+#### 回波接收时间戳
+#### 天线配置信息
+#### 波束成形权重
+
+## 验证方法
+### 原型实现
+#### 使用波束成形
+#### 使用全双工操作
+### 性能指标
+#### 端到端延迟 - 适合近实时应用
+#### 闭环控制 - 成功演示
+
+## 未来方向
+### 双静态传感扩展
+### 协作传感扩展`;
+        
+        let mm;
+        let svg;
+        
+        async function init() {
+            const transformer = new markmap.Transformer();
+            const { root, features } = transformer.transform(markdown);
+            
+            svg = d3.select('#mindmap');
+            const { el } = markmap.Markmap.create(svg.node(), null, root);
+            mm = el;
+            
+            // 自动适应视图
+            setTimeout(() => {
+                mm.fit();
+            }, 100);
+        }
+        
+        function expandAll() {
+            mm.setData(mm.state.data, {
+                ...mm.state,
+                initialExpand: true
+            });
+        }
+        
+        function collapseAll() {
+            mm.setData(mm.state.data, {
+                ...mm.state,
+                initialExpand: false
+            });
+        }
+        
+        function fitView() {
+            mm.fit();
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.markmap-sidebar');
+            if (sidebar) {
+                sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        function exportSVG() {
+            const svgData = new XMLSerializer().serializeToString(svg.node());
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ISAC_mindmap.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function exportPNG() {
+            const svgData = new XMLSerializer().serializeToString(svg.node());
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            canvas.width = 1920;
+            canvas.height = 1080;
+            
+            img.onload = () => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                const png = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = png;
+                a.download = 'ISAC_mindmap.png';
+                a.click();
+            };
+            
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        }
+        
+        init();
+    </script>
+</body>
+</html>

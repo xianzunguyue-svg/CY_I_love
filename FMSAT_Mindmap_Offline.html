@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMSAT 知识图谱 - 思维导图</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1800px; margin: 0 auto; }
+        .card {
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-bottom: 20px;
+        }
+        h1 { 
+            color: #1a1a2e; margin-bottom: 10px; text-align: center; 
+            font-size: 2em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
+        .mindmap-wrapper {
+            width: 100%; overflow-x: auto; 
+            border: 3px solid #667eea; border-radius: 15px; 
+            background: #fafafa; padding: 40px 20px;
+        }
+        .controls { 
+            display: flex; gap: 15px; margin-top: 20px; 
+            justify-content: center; flex-wrap: wrap; 
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; padding: 12px 30px; 
+            border-radius: 30px; cursor: pointer; 
+            font-size: 14px; font-weight: bold;
+            transition: all 0.3s; box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.6); }
+        
+        /* 思维导图样式 */
+        .mindmap { display: flex; flex-direction: column; align-items: center; }
+        .branch { 
+            display: flex; flex-direction: column; align-items: center; 
+            margin: 20px 10px; position: relative;
+        }
+        .branch::before {
+            content: ''; position: absolute; top: -20px; left: 50%;
+            width: 2px; height: 20px; background: #667eea;
+        }
+        .node {
+            padding: 12px 25px; border-radius: 10px;
+            font-weight: bold; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s; cursor: pointer;
+            position: relative; z-index: 2;
+        }
+        .node:hover { transform: scale(1.05); box-shadow: 0 6px 25px rgba(0,0,0,0.3); }
+        .root { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; font-size: 1.4em; padding: 20px 40px;
+            margin-bottom: 40px;
+        }
+        .level1 { 
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+            color: white; font-size: 1.1em; padding: 15px 30px;
+            margin: 15px 20px;
+        }
+        .level2 { 
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+            color: white; padding: 10px 20px;
+            margin: 10px 15px; font-size: 0.95em;
+        }
+        .level3 { 
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
+            color: #333; padding: 8px 18px;
+            margin: 8px 10px; font-size: 0.9em; font-weight: normal;
+        }
+        .branches-container {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 20px;
+        }
+        .sub-branches {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 10px; margin-top: 15px;
+        }
+        .legend { 
+            display: flex; gap: 15px; margin-top: 20px; 
+            justify-content: center; flex-wrap: wrap; 
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-color { width: 30px; height: 20px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🚀 FMSAT 知识图谱</h1>
+            <div class="subtitle">语义卫星通信 - 基于生成基础模型</div>
+            
+            <div class="mindmap-wrapper">
+                <div class="mindmap">
+                    <!-- 根节点 -->
+                    <div class="node root">🚀 FMSAT 知识图谱</div>
+                    
+                    <div class="branches-container">
+                        <!-- 分支 1: 研究挑战 -->
+                        <div class="branch">
+                            <div class="node level1">🎯 研究挑战</div>
+                            <div class="sub-branches">
+                                <div class="node level2">
+                                    ⚠️ 雨衰和大气衰减
+                                    <div class="sub-branches">
+                                        <div class="node level3">卫星信道受降雨影响</div>
+                                        <div class="node level3">信号严重衰减</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    ⏱️ 长传播延迟
+                                    <div class="sub-branches">
+                                        <div class="node level3">2-20ms 延迟</div>
+                                        <div class="node level3">影响 HARQ 反馈</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    📡 同信道干扰 (CCI)
+                                    <div class="sub-branches">
+                                        <div class="node level3">激进频率复用</div>
+                                        <div class="node level3">严重干扰问题</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 分支 2: 系统架构 -->
+                        <div class="branch">
+                            <div class="node level1">🏗️ 系统架构</div>
+                            <div class="sub-branches">
+                                <div class="node level2">
+                                    💻 用户终端 UT
+                                    <div class="sub-branches">
+                                        <div class="node level3">发送端设备</div>
+                                        <div class="node level3">语义提取编码</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    🛰️ 再生卫星
+                                    <div class="sub-branches">
+                                        <div class="node level3">LEO 卫星</div>
+                                        <div class="node level3">星上处理</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    🏢 网关
+                                    <div class="sub-branches">
+                                        <div class="node level3">地面站</div>
+                                        <div class="node level3">语义重建</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 分支 3: 核心贡献 -->
+                        <div class="branch">
+                            <div class="node level1">💡 核心贡献</div>
+                            <div class="sub-branches">
+                                <div class="node level2">
+                                    🎯 FMSAT 框架
+                                    <div class="sub-branches">
+                                        <div class="node level3">FM 基分割重建</div>
+                                        <div class="node level3">减少带宽需求</div>
+                                        <div class="node level3">高噪声下准确恢复</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    🔄 自适应编码器 - 解码器
+                                    <div class="sub-branches">
+                                        <div class="node level3">多速率编码器</div>
+                                        <div class="node level3">信道自适应</div>
+                                        <div class="node level3">保护关键特征</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    ✅ 双层错误检测器
+                                    <div class="sub-branches">
+                                        <div class="node level3">粗略检测器 (卫星端)</div>
+                                        <div class="node level3">精细检测器 (网关端)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 分支 4: AI 模型 -->
+                        <div class="branch">
+                            <div class="node level1">🤖 AI 模型</div>
+                            <div class="sub-branches">
+                                <div class="node level2">
+                                    🎨 SegGPT
+                                    <div class="sub-branches">
+                                        <div class="node level3">mIoU ≈ 80%</div>
+                                        <div class="node level3">生成训练标签</div>
+                                        <div class="node level3">指导 UNet 学习</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    🔧 UNet
+                                    <div class="sub-branches">
+                                        <div class="node level3">mIoU ≈ 60%</div>
+                                        <div class="node level3">轻量级网络</div>
+                                        <div class="node level3">适用于 UT 端</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    🌈 条件扩散模型
+                                    <div class="sub-branches">
+                                        <div class="node level3">图像去噪</div>
+                                        <div class="node level3">修复受损图像</div>
+                                        <div class="node level3">从噪声生成</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 分支 5: 关键技术 -->
+                        <div class="branch">
+                            <div class="node level1">🔬 关键技术</div>
+                            <div class="sub-branches">
+                                <div class="node level2">
+                                    💬 语义通信
+                                    <div class="sub-branches">
+                                        <div class="node level3">共享知识库</div>
+                                        <div class="node level3">减少带宽需求</div>
+                                        <div class="node level3">抗恶劣信道</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    📶 OFDM
+                                    <div class="sub-branches">
+                                        <div class="node level3">正交频分复用</div>
+                                        <div class="node level3">调制解调器</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    🔁 HARQ
+                                    <div class="sub-branches">
+                                        <div class="node level3">混合自动重传</div>
+                                        <div class="node level3">错误恢复</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    🔗 内容相关性
+                                    <div class="sub-branches">
+                                        <div class="node level3">利用已接收图像</div>
+                                        <div class="node level3">辅助修复受损图像</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 分支 6: 性能指标 -->
+                        <div class="branch">
+                            <div class="node level1">📊 性能指标</div>
+                            <div class="sub-branches">
+                                <div class="node level2">
+                                    📈 分割性能
+                                    <div class="sub-branches">
+                                        <div class="node level3">SegGPT: 80%</div>
+                                        <div class="node level3">UNet: 60%</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    🎯 错误检测阈值
+                                    <div class="sub-branches">
+                                        <div class="node level3">MSE_req ≤ 0.015</div>
+                                    </div>
+                                </div>
+                                <div class="node level2">
+                                    📉 带宽需求
+                                    <div class="sub-branches">
+                                        <div class="node level3">显著降低</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                    <span>根节点</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                    <span>一级分类</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+                    <span>二级节点</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></div>
+                    <span>三级详情</span>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button onclick="expandAll()">📖 展开全部</button>
+                <button onclick="collapseAll()">📕 折叠全部</button>
+                <button onclick="window.print()">🖨️ 打印/保存 PDF</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let expanded = true;
+        
+        function expandAll() {
+            document.querySelectorAll('.level2, .level3').forEach(el => el.style.display = 'block');
+            expanded = true;
+        }
+        
+        function collapseAll() {
+            document.querySelectorAll('.level3').forEach(el => el.style.display = 'none');
+            expanded = false;
+        }
+        
+        // 点击节点切换子节点
+        document.querySelectorAll('.level2').forEach(node => {
+            node.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const subs = this.querySelectorAll('.level3');
+                subs.forEach(sub => {
+                    sub.style.display = sub.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+        
+        // 初始化
+        expandAll();
+    </script>
+</body>
+</html>
