@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMSAT 知识图谱 - 思维导图</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #mindmap { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <svg id="mindmap"></svg>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.min.js"></script>
+    <script>
+        const markdown = `# 🚀 FMSAT 知识图谱
+
+## 🎯 研究挑战
+### 雨衰和大气衰减
+- 卫星信道受降雨影响
+- 信号严重衰减
+### 长传播延迟
+- 2-20ms 延迟
+- 影响 HARQ 反馈
+### 同信道干扰 CCI
+- 激进频率复用
+- 严重干扰问题
+
+## 🏗️ 系统架构
+### 用户终端 UT
+- 发送端设备
+- 语义提取编码
+### 再生卫星
+- LEO 卫星
+- 星上处理
+### 网关
+- 地面站
+- 语义重建
+
+## 💡 核心贡献
+### FMSAT 框架
+- FM 基分割重建
+- 减少带宽需求
+### 自适应编解码器
+- 多速率编码
+- 信道自适应
+### 双层错误检测
+- 粗略检测器
+- 精细检测器
+
+## 🤖 AI 模型
+### SegGPT
+- mIoU 约 80%
+- 生成训练标签
+### UNet
+- mIoU 约 60%
+- 轻量级网络
+### 条件扩散模型
+- 图像去噪
+- 修复受损图像
+
+## 🔬 关键技术
+### 语义通信
+- 共享知识库
+- 减少带宽
+### OFDM
+- 正交频分复用
+### HARQ
+- 混合自动重传
+### 内容相关性
+- 利用已接收图像
+
+## 📊 性能指标
+### 分割性能
+- SegGPT 80%
+- UNet 60%
+### 错误检测阈值
+- MSE_req ≤ 0.015
+### 带宽需求
+- 显著降低`;
+
+        const transformer = new markmap.Transformer();
+        const { root, features } = transformer.transform(markdown);
+        const { styles, scripts } = transformer.getUsedAssets(features);
+        if (styles) markmap.loadCSS(styles);
+        if (scripts) markmap.loadJS(scripts, { getMarkmap: () => window.markmap });
+        markmap.Markmap.create('#mindmap', {
+            pan: true,
+            zoom: true,
+            fitRatio: 0.95,
+            initialExpandLevel: 3
+        }, root);
+    </script>
+</body>
+</html>
