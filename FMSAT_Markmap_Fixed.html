@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMSAT 知识图谱 - 思维导图</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .card {
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-bottom: 20px;
+        }
+        h1 { 
+            color: #1a1a2e; margin-bottom: 10px; text-align: center; 
+            font-size: 2em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
+        #mindmap-container { 
+            width: 100%; height: 800px; 
+            border: 3px solid #667eea; border-radius: 15px; 
+            background: #fafafa; overflow: hidden;
+        }
+        .controls { 
+            display: flex; gap: 15px; margin-top: 20px; 
+            justify-content: center; flex-wrap: wrap; 
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; padding: 12px 30px; 
+            border-radius: 30px; cursor: pointer; 
+            font-size: 14px; font-weight: bold;
+            transition: all 0.3s; box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.6); }
+        .loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+            flex-direction: column; gap: 20px;
+        }
+        .spinner {
+            width: 60px; height: 60px; border: 4px solid #e0e0e0;
+            border-top-color: #667eea; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: #667eea; font-size: 1.2em; font-weight: bold; }
+        .error { color: #f44336; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">正在加载思维导图库...</div>
+        <div style="color:#999;font-size:0.9em;margin-top:10px;">如果长时间未加载，请检查网络连接</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h1>🚀 FMSAT 知识图谱</h1>
+            <div class="subtitle">语义卫星通信 - 基于生成基础模型</div>
+            
+            <div id="mindmap-container">
+                <svg id="mindmap" width="100%" height="100%"></svg>
+            </div>
+            
+            <div class="controls">
+                <button onclick="fit()">🎯 适应窗口</button>
+                <button onclick="expandAll()">📖 展开全部</button>
+                <button onclick="collapseAll()">📕 折叠全部</button>
+                <button onclick="downloadSVG()">💾 下载 SVG</button>
+                <button onclick="downloadPNG()">📷 下载 PNG</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Markmap 库 - 使用多个 CDN 备用 -->
+    <script>
+        // 尝试从多个 CDN 加载
+        function loadScript(url) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Failed to load: ' + url));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function loadLibraries() {
+            try {
+                // 加载 D3
+                await loadScript('https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js');
+                console.log('✅ D3 loaded');
+                
+                // 加载 Markmap View
+                await loadScript('https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/index.min.js');
+                console.log('✅ Markmap View loaded');
+                
+                // 加载 Markmap Lib
+                await loadScript('https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.min.js');
+                console.log('✅ Markmap Lib loaded');
+                
+                // 库加载完成，初始化思维导图
+                initMindmap();
+            } catch (e) {
+                console.error('❌ Library load error:', e);
+                document.getElementById('loading').innerHTML = 
+                    '<div class="error">' +
+                    '<h2>❌ 库加载失败</h2>' +
+                    '<p>错误：' + e.message + '</p>' +
+                    '<p style="margin-top:20px;">请检查网络连接，或尝试刷新页面</p>' +
+                    '<p style="margin-top:10px;color:#666;">需要访问：cdn.jsdelivr.net</p>' +
+                    '</div>';
+            }
+        }
+
+        // FMSAT 思维导图 Markdown 内容
+        const markdown = `# 🚀 FMSAT 知识图谱
+## 🎯 研究挑战
+### 雨衰和大气衰减
+- 卫星信道受降雨影响
+- 信号严重衰减
+### 长传播延迟
+- 2-20ms 延迟
+- 影响 HARQ 反馈
+### 同信道干扰 (CCI)
+- 激进频率复用
+- 严重干扰问题
+## 🏗️ 系统架构
+### 用户终端 UT
+- 发送端设备
+- 语义提取编码
+### 再生卫星
+- LEO 卫星
+- 星上处理
+### 网关
+- 地面站
+- 语义重建
+## 💡 核心贡献
+### FMSAT 框架
+- FM 基分割重建
+- 减少带宽需求
+- 高噪声下准确恢复
+### 自适应编码器 - 解码器
+- 多速率编码器
+- 信道自适应
+- 保护关键特征
+### 双层错误检测器
+- 粗略检测器 (卫星端)
+- 精细检测器 (网关端)
+## 🤖 AI 模型
+### SegGPT
+- mIoU ≈ 80%
+- 生成训练标签
+- 指导 UNet 学习
+### UNet
+- mIoU ≈ 60%
+- 轻量级网络
+- 适用于 UT 端
+### 条件扩散模型
+- 图像去噪
+- 修复受损图像
+- 从噪声生成
+## 🔬 关键技术
+### 语义通信
+- 共享知识库
+- 减少带宽需求
+- 抗恶劣信道
+### OFDM
+- 正交频分复用
+- 调制解调器
+### HARQ
+- 混合自动重传
+- 错误恢复
+### 内容相关性
+- 利用已接收图像
+- 辅助修复受损图像
+## 📊 性能指标
+### 分割性能
+- SegGPT: 80%
+- UNet: 60%
+### 错误检测阈值
+- MSE_req ≤ 0.015
+### 带宽需求
+- 显著降低`;
+
+        let mm = null;
+
+        function initMindmap() {
+            try {
+                // 检查库是否加载成功
+                if (!window.markmap || !markmap.Markmap || !markmap.Transformer) {
+                    throw new Error('Markmap library not properly loaded');
+                }
+
+                const transformer = new markmap.Transformer();
+                const { root, features } = transformer.transform(markdown);
+                
+                const mmInstance = markmap.Markmap.create('#mindmap', {
+                    pan: true,
+                    zoom: true,
+                    fitRatio: 0.95,
+                    duration: 500,
+                    initialExpandLevel: 2,
+                    spacingHorizontal: 80,
+                    spacingVertical: 60,
+                    paddingX: 30,
+                    maxWidth: 200,
+                    wrapLongText: true
+                }, root);
+                
+                mm = mmInstance;
+                
+                // 隐藏加载动画
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 500);
+                
+                console.log('✅ Mindmap created successfully!');
+            } catch (e) {
+                console.error('❌ Mindmap init error:', e);
+                document.getElementById('loading').innerHTML = 
+                    '<div class="error">' +
+                    '<h2>❌ 思维导图创建失败</h2>' +
+                    '<p>错误：' + e.message + '</p>' +
+                    '<p style="margin-top:20px;">请刷新页面重试</p>' +
+                    '</div>';
+            }
+        }
+
+        // 控制函数
+        function fit() { if (mm) mm.fit(); }
+        function expandAll() { if (mm) { mm.setOptions({ initialExpandLevel: 10 }); mm.fit(); } }
+        function collapseAll() { if (mm) { mm.setOptions({ initialExpandLevel: 1 }); mm.fit(); } }
+        
+        function downloadSVG() {
+            if (!mm) return;
+            const svg = document.querySelector('#mindmap svg');
+            if (!svg) return;
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'FMSAT_Mindmap.svg';
+            a.click();
+        }
+        
+        function downloadPNG() {
+            if (!mm) return;
+            const svg = document.querySelector('#mindmap svg');
+            if (!svg) return;
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                canvas.width = img.width + 100;
+                canvas.height = img.height + 100;
+                ctx.fillStyle = '#fafafa';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 50, 50);
+                const a = document.createElement('a');
+                a.download = 'FMSAT_Mindmap.png';
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+            };
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        }
+
+        // 页面加载完成后开始加载库
+        window.addEventListener('load', loadLibraries);
+    </script>
+</body>
+</html>
