@@ -1078,8 +1078,22 @@
     
     <!-- Markmap 思维导图 -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12"></script>
-    <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.min.js"></script>
+    <script>
+        // 预加载 Markmap 库
+        window.markmapPromise = new Promise((resolve, reject) => {
+            const viewScript = document.createElement('script');
+            viewScript.src = 'https://cdn.jsdelivr.net/npm/markmap-view@0.18.12';
+            viewScript.onload = () => {
+                const libScript = document.createElement('script');
+                libScript.src = 'https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.min.js';
+                libScript.onload = resolve;
+                libScript.onerror = reject;
+                document.head.appendChild(libScript);
+            };
+            viewScript.onerror = reject;
+            document.head.appendChild(viewScript);
+        });
+    </script>
     <script>
         // FMSAT 思维导图数据
         const mindmapMarkdown = `# FMSAT 知识图谱
@@ -1147,21 +1161,30 @@
 
         // 初始化 Markmap
         function initMindmap() {
-            const transformer = new markmap.Transformer();
-            const { root, features } = transformer.transform(mindmapMarkdown);
-            const { styles, scripts } = transformer.getUsedAssets(features);
-            
-            if (styles) markmap.loadCSS(styles);
-            if (scripts) markmap.loadJS(scripts, { getMarkmap: () => window.markmap });
-            
-            const mm = markmap.Markmap.create('#mindmap-svg', {
-                pan: true,
-                zoom: true,
-                fitRatio: 0.95,
-                duration: 500
-            }, root);
-            
-            window.mm = mm;
+            try {
+                if (!window.markmap || !markmap.Transformer) {
+                    console.error('Markmap library not loaded');
+                    return;
+                }
+                const transformer = new markmap.Transformer();
+                const { root, features } = transformer.transform(mindmapMarkdown);
+                const { styles, scripts } = transformer.getUsedAssets(features);
+                
+                if (styles) markmap.loadCSS(styles);
+                if (scripts) markmap.loadJS(scripts, { getMarkmap: () => window.markmap });
+                
+                const mm = markmap.Markmap.create('#mindmap-svg', {
+                    pan: true,
+                    zoom: true,
+                    fitRatio: 0.95,
+                    duration: 500
+                }, root);
+                
+                window.mm = mm;
+                console.log('Mindmap initialized successfully');
+            } catch (e) {
+                console.error('Mindmap init error:', e);
+            }
         }
         
         // 控制函数
@@ -1194,8 +1217,12 @@
             img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
         }
         
-        // 页面加载后初始化
-        document.addEventListener('DOMContentLoaded', initMindmap);
+        // 页面加载后初始化 - 等待库加载完成
+        window.markmapPromise.then(() => {
+            setTimeout(initMindmap, 200);
+        }).catch(err => {
+            console.error('Failed to load Markmap:', err);
+        });
     </script>
 </body>
 </html>
