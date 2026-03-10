@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMSAT 知识图谱 - 思维导图</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .card {
+            background: white; border-radius: 15px; padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        h1 { color: #1a1a2e; margin-bottom: 20px; }
+        .mindmap-container { 
+            width: 100%; 
+            overflow-x: auto; 
+            border: 2px solid #00d4ff; 
+            border-radius: 10px; 
+            background: #fafafa;
+            padding: 20px;
+        }
+        .node { 
+            display: inline-block; 
+            margin: 5px; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .node:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .root { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 1.5em; }
+        .level1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; margin: 15px 10px; }
+        .level2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; margin: 10px 8px; }
+        .level3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #333; margin: 8px 6px; }
+        .branch { margin: 20px 0; padding: 15px; border-left: 3px solid #00d4ff; background: white; border-radius: 0 10px 10px 0; }
+        .branch-title { font-size: 1.3em; font-weight: bold; color: #1a1a2e; margin-bottom: 10px; }
+        .node-list { margin-left: 20px; }
+        .node-item { 
+            display: block; 
+            margin: 8px 0; 
+            padding: 8px 15px; 
+            background: #e3f2fd; 
+            border-radius: 6px;
+            border-left: 4px solid #2196f3;
+        }
+        .node-item.sub { 
+            margin-left: 20px; 
+            background: #f3e5f5; 
+            border-left-color: #9c27b0;
+            font-size: 0.95em;
+        }
+        .controls { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        button {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; border: none; padding: 12px 25px; border-radius: 25px;
+            cursor: pointer; font-size: 14px; font-weight: bold;
+        }
+        button:hover { transform: scale(1.05); }
+        .legend { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-color { width: 20px; height: 20px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🧠 FMSAT 知识图谱思维导图</h1>
+            
+            <div class="mindmap-container">
+                <!-- 根节点 -->
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <span class="node root">🚀 FMSAT 知识图谱</span>
+                </div>
+                
+                <!-- 分支 1: 研究挑战 -->
+                <div class="branch">
+                    <div class="branch-title">🎯 研究挑战</div>
+                    <div class="node-list">
+                        <div class="node-item">
+                            ⚠️ 雨衰和大气衰减
+                            <div class="node-item sub">📍 卫星信道受降雨影响导致信号衰减</div>
+                        </div>
+                        <div class="node-item">
+                            ⏱️ 长传播延迟
+                            <div class="node-item sub">📍 2-20ms 延迟影响 HARQ 反馈</div>
+                        </div>
+                        <div class="node-item">
+                            📡 同信道干扰 (CCI)
+                            <div class="node-item sub">📍 频率复用导致严重干扰</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分支 2: 系统架构 -->
+                <div class="branch">
+                    <div class="branch-title">🏗️ 系统架构</div>
+                    <div class="node-list">
+                        <div class="node-item">
+                            💻 用户终端 UT
+                            <div class="node-item sub">📍 发送端设备，负责语义提取编码</div>
+                        </div>
+                        <div class="node-item">
+                            🛰️ 再生卫星
+                            <div class="node-item sub">📍 LEO 卫星，支持星上处理</div>
+                        </div>
+                        <div class="node-item">
+                            🏢 网关
+                            <div class="node-item sub">📍 地面站，负责语义重建</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分支 3: 核心贡献 -->
+                <div class="branch">
+                    <div class="branch-title">💡 核心贡献</div>
+                    <div class="node-list">
+                        <div class="node-item">
+                            🎯 FMSAT 框架
+                            <div class="node-item sub">📍 FM 基分割重建，减少带宽需求</div>
+                        </div>
+                        <div class="node-item">
+                            🔄 自适应编码器 - 解码器
+                            <div class="node-item sub">📍 多速率编码，信道自适应</div>
+                        </div>
+                        <div class="node-item">
+                            ✅ 双层错误检测
+                            <div class="node-item sub">📍 粗略检测器 (卫星) + 精细检测器 (网关)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分支 4: AI 模型 -->
+                <div class="branch">
+                    <div class="branch-title">🤖 AI 模型</div>
+                    <div class="node-list">
+                        <div class="node-item">
+                            🎨 SegGPT
+                            <div class="node-item sub">📍 mIoU ≈ 80%，生成训练标签</div>
+                        </div>
+                        <div class="node-item">
+                            🔧 UNet
+                            <div class="node-item sub">📍 mIoU ≈ 60%，轻量级网络</div>
+                        </div>
+                        <div class="node-item">
+                            🌈 条件扩散模型
+                            <div class="node-item sub">📍 图像去噪和修复受损图像</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分支 5: 关键技术 -->
+                <div class="branch">
+                    <div class="branch-title">🔬 关键技术</div>
+                    <div class="node-list">
+                        <div class="node-item">
+                            💬 语义通信
+                            <div class="node-item sub">📍 共享知识库，减少带宽</div>
+                        </div>
+                        <div class="node-item">
+                            📶 OFDM
+                            <div class="node-item sub">📍 正交频分复用</div>
+                        </div>
+                        <div class="node-item">
+                            🔁 HARQ
+                            <div class="node-item sub">📍 混合自动重传请求</div>
+                        </div>
+                        <div class="node-item">
+                            🔗 内容相关性
+                            <div class="node-item sub">📍 利用已接收图像辅助修复</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分支 6: 性能指标 -->
+                <div class="branch">
+                    <div class="branch-title">📊 性能指标</div>
+                    <div class="node-list">
+                        <div class="node-item">
+                            📈 分割性能
+                            <div class="node-item sub">📍 SegGPT: 80% | UNet: 60%</div>
+                        </div>
+                        <div class="node-item">
+                            🎯 错误检测阈值
+                            <div class="node-item sub">📍 MSE_req ≤ 0.015</div>
+                        </div>
+                        <div class="node-item">
+                            📉 带宽需求
+                            <div class="node-item sub">📍 显著降低</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                    <span>根节点</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                    <span>一级分类</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+                    <span>二级节点</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></div>
+                    <span>三级详情</span>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button onclick="expandAll()">📖 展开全部</button>
+                <button onclick="collapseAll()">📕 折叠全部</button>
+                <button onclick="window.print()">🖨️ 打印/保存 PDF</button>
+                <button onclick="downloadImage()">💾 下载图片</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📋 图谱说明</h2>
+            <ul style="line-height: 2; margin-left: 20px;">
+                <li><strong>研究挑战：</strong>雨衰和大气衰减、长传播延迟、同信道干扰</li>
+                <li><strong>系统架构：</strong>用户终端 UT、再生卫星、网关</li>
+                <li><strong>核心贡献：</strong>FMSAT 框架、自适应编码器 - 解码器、双层错误检测器</li>
+                <li><strong>AI 模型：</strong>SegGPT、UNet、条件扩散模型</li>
+                <li><strong>关键技术：</strong>语义通信、OFDM、HARQ、内容相关性</li>
+                <li><strong>性能指标：</strong>分割性能、错误检测阈值、带宽需求</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function expandAll() {
+            document.querySelectorAll('.branch').forEach(b => b.style.display = 'block');
+            alert('已展开全部节点');
+        }
+        
+        function collapseAll() {
+            alert('折叠功能需要 JavaScript 支持，当前为简化版本');
+        }
+        
+        function downloadImage() {
+            alert('提示：\n1. 按 F12 打开开发者工具\n2. 使用截图功能\n3. 或使用浏览器扩展保存完整页面');
+        }
+        
+        // 添加点击交互
+        document.querySelectorAll('.node-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const sub = this.querySelector('.node-item.sub');
+                if (sub) {
+                    sub.style.display = sub.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
