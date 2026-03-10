@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMSAT 知识图谱 - 思维导图</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .card {
+            background: white; border-radius: 15px; padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        h1 { color: #1a1a2e; margin-bottom: 20px; }
+        #mindmap { width: 100%; height: 600px; border: 2px solid #00d4ff; border-radius: 10px; background: #fafafa; }
+        .controls { display: flex; gap: 10px; margin-top: 15px; }
+        button {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white; border: none; padding: 12px 25px; border-radius: 25px;
+            cursor: pointer; font-size: 14px; font-weight: bold;
+        }
+        button:hover { transform: scale(1.05); }
+        .debug { background: #000; color: #0f0; padding: 15px; border-radius: 8px; margin-top: 20px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🧠 FMSAT 知识图谱思维导图</h1>
+            <div id="mindmap"></div>
+            <div class="controls">
+                <button onclick="expandAll()">📖 展开全部</button>
+                <button onclick="collapseAll()">📕 折叠全部</button>
+                <button onclick="zoomIn()">🔍 放大</button>
+                <button onclick="zoomOut()">🔎 缩小</button>
+            </div>
+        </div>
+        <div class="card">
+            <h2>📋 图谱说明</h2>
+            <ul style="line-height: 2; margin-left: 20px;">
+                <li><strong>研究挑战：</strong>雨衰和大气衰减、长传播延迟、同信道干扰</li>
+                <li><strong>系统架构：</strong>用户终端 UT、再生卫星、网关</li>
+                <li><strong>核心贡献：</strong>FMSAT 框架、自适应编码器 - 解码器、双层错误检测器</li>
+                <li><strong>AI 模型：</strong>SegGPT、UNet、条件扩散模型</li>
+                <li><strong>关键技术：</strong>语义通信、OFDM、HARQ、内容相关性</li>
+                <li><strong>性能指标：</strong>分割性能、错误检测阈值、带宽需求</li>
+            </ul>
+        </div>
+        <div id="debug" class="debug" style="display:none;"></div>
+    </div>
+
+    <!-- 使用 unpkg CDN -->
+    <script src="https://unpkg.com/d3@7.8.5/dist/d3.min.js"></script>
+    <script src="https://unpkg.com/markmap-view@0.15.4/dist/browser/index.min.js"></script>
+    <script src="https://unpkg.com/markmap-lib@0.15.4/dist/browser/index.min.js"></script>
+    
+    <script>
+        const log = (msg) => {
+            const d = document.getElementById('debug');
+            d.style.display = 'block';
+            d.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
+            console.log(msg);
+        };
+
+        const mindmapMarkdown = `# FMSAT 知识图谱
+
+## 🎯 研究挑战
+- 雨衰和大气衰减
+  - 卫星信道受降雨影响
+- 长传播延迟
+  - 2-20ms 影响 HARQ
+- 同信道干扰 (CCI)
+  - 频率复用导致干扰
+
+## 🏗️ 系统架构
+- 用户终端 UT
+  - 发送端设备
+  - 语义提取编码
+- 再生卫星
+  - LEO 卫星
+  - 星上处理
+- 网关
+  - 地面站
+  - 语义重建
+
+## 💡 核心贡献
+- FMSAT 框架
+  - FM 基分割重建
+  - 减少带宽需求
+- 自适应编码器 - 解码器
+  - 多速率编码
+  - 信道自适应
+- 双层错误检测
+  - 粗略检测器 (卫星)
+  - 精细检测器 (网关)
+
+## 🤖 AI 模型
+- SegGPT
+  - mIoU ≈ 80%
+  - 生成训练标签
+- UNet
+  - mIoU ≈ 60%
+  - 轻量级
+- 条件扩散模型
+  - 图像去噪
+  - 修复受损图像
+
+## 🔬 关键技术
+- 语义通信
+  - 共享知识库
+  - 减少带宽
+- OFDM
+  - 正交频分复用
+- HARQ
+  - 混合自动重传
+- 内容相关性
+  - 利用已接收图像
+
+## 📊 性能指标
+- 分割性能
+  - SegGPT: 80%
+  - UNet: 60%
+- 错误检测阈值
+  - MSE_req ≤ 0.015
+- 带宽需求
+  - 显著降低`;
+
+        let mm = null;
+
+        function initMindmap() {
+            try {
+                log('Starting initialization...');
+                log('markmap available: ' + !!window.markmap);
+                log('Transformer available: ' + !!markmap.Transformer);
+                
+                if (!window.markmap || !markmap.Transformer) {
+                    log('ERROR: Markmap library not loaded!');
+                    document.getElementById('mindmap').innerHTML = 
+                        '<div style="padding:40px;text-align:center;color:#666;">❌ Markmap 库加载失败，请检查网络连接</div>';
+                    return;
+                }
+
+                const transformer = new markmap.Transformer();
+                log('Transformer created');
+                
+                const { root, features } = transformer.transform(mindmapMarkdown);
+                log('Markdown transformed, root: ' + JSON.stringify(root).substring(0, 100) + '...');
+                
+                const mmInstance = markmap.Markmap.create('#mindmap', {
+                    pan: true,
+                    zoom: true,
+                    fitRatio: 0.95,
+                    duration: 500,
+                    initialExpandLevel: 3
+                }, root);
+                
+                mm = mmInstance;
+                log('✅ Mindmap created successfully!');
+            } catch (e) {
+                log('❌ ERROR: ' + e.message);
+                log('Stack: ' + e.stack);
+                document.getElementById('mindmap').innerHTML = 
+                    '<div style="padding:40px;text-align:center;color:red;">❌ 错误：' + e.message + '</div>';
+            }
+        }
+
+        function expandAll() {
+            if (mm) { mm.setOptions({ initialExpandLevel: 10 }); log('Expanded all'); }
+        }
+        
+        function collapseAll() {
+            if (mm) { mm.setOptions({ initialExpandLevel: 1 }); log('Collapsed all'); }
+        }
+        
+        function zoomIn() {
+            if (mm) { mm.fit(); log('Zoomed in'); }
+        }
+        
+        function zoomOut() {
+            if (mm) { mm.fit(); log('Zoomed out'); }
+        }
+
+        // 延迟初始化，确保库已加载
+        log('Page loaded, waiting for libraries...');
+        window.addEventListener('load', () => {
+            log('Window load event fired');
+            setTimeout(() => {
+                log('Attempting to initialize...');
+                initMindmap();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
