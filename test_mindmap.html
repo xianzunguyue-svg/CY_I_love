@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>测试思维导图</title>
+<style>
+body { font-family: sans-serif; margin: 20px; }
+#mindmap { width: 100%; height: 500px; border: 2px solid #00d4ff; }
+</style>
+</head>
+<body>
+<h1>FMSAT 思维导图测试</h1>
+<svg id="mindmap"></svg>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.min.js"></script>
+<script>
+const md = `# FMSAT
+## 挑战
+- 雨衰
+- 延迟
+## 架构
+- UT
+- 卫星
+- 网关`;
+const t = new markmap.Transformer();
+const {root, features} = t.transform(md);
+markmap.Markmap.create('#mindmap', {}, root);
+</script>
+</body>
+</html>
